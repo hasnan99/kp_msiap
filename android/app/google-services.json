@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "643752504065",
+    "project_id": "msiap-f7ad9",
+    "storage_bucket": "msiap-f7ad9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:643752504065:android:9c83f50bed72b501500900",
+        "android_client_info": {
+          "package_name": "com.example.kp_msiap"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "643752504065-ftv0481m5dci9i8jq6mg2gbcsrj1jghf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBG2itnMJGA23OurtsI7Rza1dGUqTtfnPg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "643752504065-ftv0481m5dci9i8jq6mg2gbcsrj1jghf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

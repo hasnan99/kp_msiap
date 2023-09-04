@@ -3,18 +3,21 @@ import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kp_msiap/api/push_notif.dart';
 import 'package:kp_msiap/beranda.dart';
 import 'package:kp_msiap/register.dart';
-
-
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api/auth.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await firebasepush().initNotif();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  var uid = prefs.getString('uid');
   AwesomeNotifications().initialize(
       null,[NotificationChannel(
       channelKey: 'basic',
@@ -23,8 +26,9 @@ void main() async{
   ],
     debug: true,
   );
-  runApp(const MaterialApp(
-    home: login(),
+  runApp( MaterialApp(
+    home: uid == null? const login(): const Beranda(),
+    builder: EasyLoading.init(),
   ));
 }
 
@@ -48,7 +52,7 @@ class _login extends State<login> {
     final size = MediaQuery.of(context).size;
     return Scaffold(
       body: Scaffold(
-          backgroundColor: const Color(0xfff20403),
+          backgroundColor: const Color(0xff4B5526),
           resizeToAvoidBottomInset: false,
           body: SafeArea(
           child:SingleChildScrollView(
@@ -231,9 +235,9 @@ class _login extends State<login> {
               TextSpan(
                 text: 'Daftar Disini',
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 16,
                   color: Colors.black,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.bold,
                 ),
                 recognizer: TapGestureRecognizer()
                   ..onTap = () {
@@ -417,7 +421,7 @@ class _login extends State<login> {
       width: size.width * 0.7,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(50.0),
-        color: const Color(0xfff20403),
+        color: const Color(0xff4B5526),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF4C2E84).withOpacity(0.2),
@@ -440,25 +444,22 @@ class _login extends State<login> {
     );
   }
 
-  void handelsubmit() async {
+  Future handelsubmit() async {
     if (!_formkey.currentState!.validate()) return;
     final email = emailController.value.text;
     final password = passController.value.text;
-
-    if(islogin){
+    if(islogin && email.isNotEmpty && password.isNotEmpty){
         try {
-          await auth().login(email, password);
+          final userCredential = await auth().login(email, password);
+          SharedPreferences preferences=await SharedPreferences.getInstance();
+          preferences.setString('uid', userCredential!.user!.uid);
           Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context)=>const Beranda()));
         } catch (error) {
           showSnackbar("Email atau password salah");
         }
     }else{
-      try{
-        await auth().register(email, password);
-      }catch(error){
-        showSnackbar("Email sudah ada");
-      }
+      showSnackbar("Email atau password tidak boleh kosong");
     }
   }
 

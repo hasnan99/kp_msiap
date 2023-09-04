@@ -3,9 +3,13 @@ import 'package:http/http.dart'as http;
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:kp_msiap/api/sheet_api.dart';
+import 'package:kp_msiap/chart/bar_chart_DI.dart';
 import 'package:kp_msiap/model/sheet.dart';
 import 'package:kp_msiap/widget/table_PAL.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
+
+import '../chart/pie_chart_DI.dart';
+import '../model/sheet_chart.dart';
 
 class Table_DI extends StatefulWidget {
   const Table_DI({Key? key}) : super(key: key);
@@ -18,7 +22,10 @@ class _Table_DI extends State<Table_DI> {
   final GlobalKey<SfDataGridState> _sfDataGridKey = GlobalKey<SfDataGridState>();
   List<sheet> data = [];
   late List<GridColumn> columns;
+  List<sheet_chart> cellValues = [];
   late var jsondata;
+  late _dataexcel dataexcel;
+  DataGridController _dataGridController = DataGridController();
 
   final List<bool> _hiddenColumns = [false, false, false, false, false,false,false,false,false,false,false,false,false];
 
@@ -41,29 +48,22 @@ class _Table_DI extends State<Table_DI> {
   @override
   void initState() {
     super.initState();
-    sheet_api().getAssetDI().then((data) {
-      setState(() {
-        this.data = data;
-        jsondata = _dataexcel(data);
-      });
-    });
   }
 
 
   Future generatedata() async {
-    var response = await http.get(Uri.parse(
-        'https://script.google.com/macros/s/AKfycbyGeC0OCpDKR_iTXkCRjLf4PsOdGJm37W1ExWpQMMG0c3lnAGIaTdY6esmJ8bzVzB4fug/exec'));
-    var list = json.decode(response.body).cast<Map<String, dynamic>>();
-    var datalist =
-    await list.map<sheet>((json) => sheet.fromJson(json)).toList();
-    jsondata = _dataexcel(data);
-    return datalist;
+    final response = await http.get(Uri.parse(sheet_api.URL_DI));
+    var list = json.decode(response.body);
+    List<sheet> _jsondata = await list.map<sheet>((json) => sheet.fromJson(json)).toList();
+    dataexcel = _dataexcel(_jsondata);
+    return _jsondata;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xff4B5526),
         title: const Text('Asset Table DI'),
         actions: [
           IconButton(onPressed: (){Navigator.pop(context);}, icon: Icon(Icons.close))
@@ -76,10 +76,65 @@ class _Table_DI extends State<Table_DI> {
               child: Text('Menu'),
             ),
             ListTile(
+              leading: Icon(Icons.visibility),
               title: const Text('Sembunyikan Kolom'),
               onTap: () {
                 Navigator.pop(context);
                 _showHideColumnDialog(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.bar_chart),
+              title: const Text('Buat Bar Chart'),
+              onTap: () async {
+                for(var data in _dataGridController.selectedRows){
+                  var Id=data.getCells()[0].value as int;
+                  var nama_aset=data.getCells()[1].value.toString();
+                  var jenis_aset=data.getCells()[2].value.toString();
+                  var kondisi=data.getCells()[3].value.toString();
+                  var status_pemakaian=data.getCells()[4].value.toString();
+                  var utilisasi=data.getCells()[5].value as int;
+                  var tahun_perolehan=data.getCells()[6].value as int;
+                  var umur_teknis=data.getCells()[7].value as int;
+                  var sumber_dana=data.getCells()[8].value.toString();
+                  var nilai_perolehan=data.getCells()[9].value as int;
+                  var nilai_buku=data.getCells()[10].value as int;
+                  var rencana_optimisasi=data.getCells()[11].value.toString();
+                  var Sheet_values=sheet_chart(Id, nama_aset, jenis_aset, kondisi, status_pemakaian, utilisasi, tahun_perolehan, umur_teknis, sumber_dana, nilai_perolehan, nilai_buku, rencana_optimisasi);
+                  cellValues.add(Sheet_values);
+                }
+                bool cleardata= await Navigator.push(context,
+                    MaterialPageRoute(builder: (context)=>barChartDI(data_chart: cellValues,)));
+                if(cleardata==true){
+                  cellValues.clear();
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.pie_chart),
+              title: const Text('Buat Pie Chart'),
+              onTap: () async {
+                for(var data in _dataGridController.selectedRows){
+                  var Id=data.getCells()[0].value as int;
+                  var nama_aset=data.getCells()[1].value.toString();
+                  var jenis_aset=data.getCells()[2].value.toString();
+                  var kondisi=data.getCells()[3].value.toString();
+                  var status_pemakaian=data.getCells()[4].value.toString();
+                  var utilisasi=data.getCells()[5].value as int;
+                  var tahun_perolehan=data.getCells()[6].value as int;
+                  var umur_teknis=data.getCells()[7].value as int;
+                  var sumber_dana=data.getCells()[8].value.toString();
+                  var nilai_perolehan=data.getCells()[9].value as int;
+                  var nilai_buku=data.getCells()[10].value as int;
+                  var rencana_optimisasi=data.getCells()[11].value.toString();
+                  var Sheet_values=sheet_chart(Id, nama_aset, jenis_aset, kondisi, status_pemakaian, utilisasi, tahun_perolehan, umur_teknis, sumber_dana, nilai_perolehan, nilai_buku, rencana_optimisasi);
+                  cellValues.add(Sheet_values);
+                }
+                bool cleardata= await Navigator.push(context,
+                    MaterialPageRoute(builder: (context)=>pieChartDI(data_chart: cellValues,)));
+                if(cleardata==true){
+                  cellValues.clear();
+                }
               },
             ),
           ],
@@ -91,7 +146,7 @@ class _Table_DI extends State<Table_DI> {
           return snapshot.hasData ?SfDataGrid(
             tableSummaryRows: [
               GridTableSummaryRow(
-                  color:Colors.indigo ,
+                  color:Color(0xff4B5526) ,
                   showSummaryInRow: false,
                   columns:[
                     const GridSummaryColumn(
@@ -109,7 +164,7 @@ class _Table_DI extends State<Table_DI> {
                   ],
                   position: GridTableSummaryRowPosition.bottom),
               GridTableSummaryRow(
-                  color:Colors.indigo ,
+                  color:Color(0xff4B5526) ,
                   showSummaryInRow: false,
                   columns: [
                     const GridSummaryColumn(
@@ -123,11 +178,15 @@ class _Table_DI extends State<Table_DI> {
                   ],
                   position: GridTableSummaryRowPosition.bottom)
             ],
-            source: jsondata,
+            source: dataexcel,
             columns: getColumn(),
             allowSorting: true,
+            controller: _dataGridController,
+            showCheckboxColumn: true,
+            selectionMode: SelectionMode.multiple,
             allowFiltering: true,
             allowColumnsResizing: true,
+            allowMultiColumnSorting: true,
           )
               :const Center(
             child: CircularProgressIndicator(
@@ -369,14 +428,14 @@ class _dataexcel extends DataGridSource {
   void buildDataGridRow() {
     dataGridRows = data.map<DataGridRow>((dataGridRow) {
       return DataGridRow(cells: [
-        DataGridCell<int>(columnName: 'No', value: dataGridRow.No),
+        DataGridCell<int>(columnName: 'No', value: dataGridRow.Id),
         DataGridCell<String>(columnName: 'Nama Aset', value: dataGridRow.nama_aset),
         DataGridCell<String>(columnName: 'Jenis Aset', value: dataGridRow.jenis_aset),
         DataGridCell<String>(columnName: 'Kondisi', value: dataGridRow.kondisi),
         DataGridCell<String>(columnName: 'Status Pemakaian', value: dataGridRow.status_pemakaian),
-        DataGridCell<String>(columnName: 'Utilisasi', value: dataGridRow.utilisasi),
-        DataGridCell<String>(columnName: 'Tahun Perolehan', value: dataGridRow.tahun_perolehan),
-        DataGridCell<String>(columnName: 'Umur Teknis', value: dataGridRow.umur_teknis),
+        DataGridCell<int>(columnName: 'Utilisasi', value: dataGridRow.utilisasi),
+        DataGridCell<int>(columnName: 'Tahun Perolehan', value: dataGridRow.tahun_perolehan),
+        DataGridCell<int>(columnName: 'Umur Teknis', value: dataGridRow.umur_teknis),
         DataGridCell<String>(columnName: 'Sumber Dana', value: dataGridRow.sumber_dana),
         DataGridCell<int>(columnName: 'Nilai Perolehan', value: dataGridRow.nilai_perolehan),
         DataGridCell<int>(columnName: 'Nilai Buku', value: dataGridRow.nilai_buku),
@@ -497,33 +556,32 @@ class _dataexcel extends DataGridSource {
       RowColumnIndex rowColumnIndex,
       String summaryValue,
       ) {
-    if(summaryColumn?.columnName=='No'){
+    if(summaryColumn?.columnName =='No' && summaryColumn?.columnName != 'Nilai buku'&& summaryColumn?.columnName != 'Nilai Perolehan'){
       return Container(
-        padding: EdgeInsets.all(10.0),
         alignment: Alignment.center,
         child:
         Text('Jumlah Data: $summaryValue', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       );
     }
-    if(summaryColumn?.summaryType==GridSummaryType.sum){
+    else if(summaryColumn?.summaryType==GridSummaryType.sum){
       final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ');
       return Container(
         padding: EdgeInsets.all(5.0),
         alignment: Alignment.center,
         child:
-        Text('Sum: ${formatter.format(double.parse(summaryValue))}',
+        Text('Total: ${formatter.format(double.parse(summaryValue))}',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       );
     }
-    if(summaryColumn?.summaryType==GridSummaryType.average){
+    else if(summaryColumn?.summaryType==GridSummaryType.average){
       final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ');
       return Container(
         padding: EdgeInsets.all(5.0),
         alignment: Alignment.center,
         child:
-        Text('average: ${formatter.format(double.parse(summaryValue))}',
+        Text('Rata-Rata: ${formatter.format(double.parse(summaryValue))}',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       );

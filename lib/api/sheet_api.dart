@@ -2,24 +2,35 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:kp_msiap/model/sheet.dart';
 
+import '../model/mailbox.dart';
+import '../model/news.dart';
 import '../model/sheet_add.dart';
 
 class sheet_api {
   // Google App Script Web URL.
   static const String URL_len =
-      "https://script.google.com/macros/s/AKfycbwNAHQvcQc8WX9J6WxmdRhVlrqigCAnmp0vGfdwNkySdg5PfrtqHSvVC65mJ7ET7W6Irw/exec";
+      "http://192.168.249.136:3000/table/get?nama_tabel=len_assets";
 
   static const String URL_dahana =
-      "https://script.google.com/macros/s/AKfycbwGU9nZCPa3c87uw-jG3G9hJfB9G2pY0wLGj-es0PpsnCSDm0MFECxMGbn2RxYY0K_-GA/exec";
+      "http://192.168.249.136:3000/table/get?nama_tabel=dahana_assets";
 
   static const String URL_DI =
-      "https://script.google.com/macros/s/AKfycbyGeC0OCpDKR_iTXkCRjLf4PsOdGJm37W1ExWpQMMG0c3lnAGIaTdY6esmJ8bzVzB4fug/exec";
+      "http://192.168.249.136:3000/table/get?nama_tabel=di_assets";
 
   static const String URL_Pindad =
-      "https://script.google.com/macros/s/AKfycbzvWweW_ByRfPezmchE-obp7LhE9UsngyKClRjQljVawX5rqo1PME9wCqa_NWlV5OCXnQ/exec";
+      "http://192.168.249.136:3000/table/get?nama_tabel=pindad_assets";
 
   static const String URL_PAL =
-      "https://script.google.com/macros/s/AKfycbxoEqLAPSwWASXhbXeb-azctarRP4nPgVZuPXPbYsdceMo9oVQ6wcZgo_ajCJU2LThF8Q/exec";
+      "http://192.168.249.136:3000/table/get?nama_tabel=pal_assets";
+
+  static const String URL_news =
+      "http://192.168.249.136:3000/table/get?nama_tabel=news";
+
+  static const String URL_mailbox_in =
+      "http://192.168.249.136:3000/table/get?nama_tabel=mailbox_in";
+
+  static const String URL_mailbox_out =
+      "http://192.168.249.136:3000/table/get?nama_tabel=mailbox_out";
 
   static const String URL_post=
       "https://script.google.com/macros/s/AKfycbxCdY62bBLixrxxX7IusDUByjomSbHygHXtUf8ArLtdjCZ6JIlX_vXiUY_2_eCVAZyA0w/exec";
@@ -40,7 +51,7 @@ class sheet_api {
     }
   }
 
-  Future<List<sheet>> getAssetList() async {
+  static Future<List<sheet>> getAssetLen() async {
     return await http.get(Uri.parse(URL_len)).then((response) {
       var jsonFeedback = json.decode(response.body) as List<dynamic>;
       return jsonFeedback.map((json) => sheet.fromJson(json)).toList();
@@ -50,7 +61,7 @@ class sheet_api {
     });
   }
 
-  Future<List<sheet>> getAssetDahana() async {
+  static Future<List<sheet>> getAssetDahana() async {
     return await http.get(Uri.parse(URL_dahana)).then((response) {
       var jsonFeedback = json.decode(response.body) as List<dynamic>;
       return jsonFeedback.map((json) => sheet.fromJson(json)).toList();
@@ -60,7 +71,7 @@ class sheet_api {
     });
   }
 
-  Future<List<sheet>> getAssetDI() async {
+  static Future<List<sheet>> getAssetDI() async {
     return await http.get(Uri.parse(URL_DI)).then((response) {
       var jsonFeedback = json.decode(response.body) as List<dynamic>;
       return jsonFeedback.map((json) => sheet.fromJson(json)).toList();
@@ -70,7 +81,7 @@ class sheet_api {
     });
   }
 
-  Future<List<sheet>> getAssetPAL() async {
+  static Future<List<sheet>> getAssetPAL() async {
     return await http.get(Uri.parse(URL_PAL)).then((response) {
       var jsonFeedback = json.decode(response.body) as List<dynamic>;
       return jsonFeedback.map((json) => sheet.fromJson(json)).toList();
@@ -80,7 +91,7 @@ class sheet_api {
     });
   }
 
-  Future<List<sheet>> getAssetpindad() async {
+  static Future<List<sheet>> getAssetpindad() async {
     return await http.get(Uri.parse(URL_Pindad)).then((response) {
       var jsonFeedback = json.decode(response.body) as List<dynamic>;
       return jsonFeedback.map((json) => sheet.fromJson(json)).toList();
@@ -88,5 +99,113 @@ class sheet_api {
       print(error);
       return <sheet>[];
     });
+  }
+
+  static Future<List<news>> getnews() async {
+    return await http.get(Uri.parse(URL_news)).then((response) {
+      var jsonFeedback = json.decode(response.body) as List<dynamic>;
+      return jsonFeedback.map((json) => news.fromJson(json)).toList();
+    }).catchError((error) {
+      print(error);
+      return <news>[];
+    });
+  }
+
+  static Future<List<mailbox>> getmailbox_in() async {
+    return await http.get(Uri.parse(URL_mailbox_in)).then((response) {
+      var jsonFeedback = json.decode(response.body) as List<dynamic>;
+      return jsonFeedback.map((json) => mailbox.fromJson(json)).toList();
+    }).catchError((error) {
+      print(error);
+      return <mailbox>[];
+    });
+  }
+
+  static Future<List<mailbox>> getmailbox_out() async {
+    return await http.get(Uri.parse(URL_mailbox_out)).then((response) {
+      var jsonFeedback = json.decode(response.body) as List<dynamic>;
+      return jsonFeedback.map((json) => mailbox.fromJson(json)).toList();
+    }).catchError((error) {
+      print(error);
+      return <mailbox>[];
+    });
+  }
+
+  static Future<http.Response> tambahdata(String nama_tabel , String nama_asset , String jenis_asset , String kondisi, String status_pemakaian ,
+    int utilisasi, int tahun_perolehan,int umur_teknis ,String sumber_dana,int nilai_perolehan,int nilai_buku ,String rencana_optimisasi, String lokasi,String gambar,String user_edit) async {
+    Map data={
+      "nama_tabel":nama_tabel,
+      "nama_asset":nama_asset,
+      "jenis_asset":jenis_asset,
+      "kondisi":kondisi,
+      "status_pemakaian":status_pemakaian,
+      "utilisasi":utilisasi,
+      "tahun_perolehan":tahun_perolehan,
+      "umur_teknis":umur_teknis,
+      "sumber_dana":sumber_dana,
+      "nilai_perolehan":nilai_perolehan,
+      "nilai_buku":nilai_buku,
+      "rencana_optimisasi":rencana_optimisasi,
+      "lokasi":lokasi,
+      "gambar":gambar,
+      "user_edit":user_edit
+    };
+    var body=json.encode(data);
+    var url=Uri.parse("http://192.168.1.13:3000/table/insert");
+    http.Response response =await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: body
+    );
+    print(response.body);
+    return response;
+  }
+
+  static Future<http.Response> editdata(String nama_tabel , int Id,String nama_asset , String jenis_asset , String kondisi, String status_pemakaian ,
+      int utilisasi, int tahun_perolehan,int umur_teknis ,String sumber_dana,int nilai_perolehan,int nilai_buku ,String rencana_optimisasi, String lokasi,String gambar,String user_edit) async {
+    Map data={
+      "nama_tabel":nama_tabel,
+      "id":Id,
+      "nama_asset":nama_asset,
+      "jenis_asset":jenis_asset,
+      "kondisi":kondisi,
+      "status_pemakaian":status_pemakaian,
+      "utilisasi":utilisasi,
+      "tahun_perolehan":tahun_perolehan,
+      "umur_teknis":umur_teknis,
+      "sumber_dana":sumber_dana,
+      "nilai_perolehan":nilai_perolehan,
+      "nilai_buku":nilai_buku,
+      "rencana_optimisasi":rencana_optimisasi,
+      "lokasi":lokasi,
+      "gambar":gambar,
+      "user_edit":user_edit
+    };
+    var body=json.encode(data);
+    var url=Uri.parse("http://192.168.1.13:3000/table/update");
+    http.Response response =await http.put(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: body
+    );
+    print(response.body);
+    return response;
+  }
+
+  static Future<http.Response> tambahnews(String nama_tabel , String nama_user , String nama_file) async {
+    Map data={
+      "nama_tabel":nama_tabel,
+      "nama_user":nama_user,
+      "nama_file":nama_file
+    };
+    var body=json.encode(data);
+    var url=Uri.parse("http://192.168.1.13:3000/news/insert");
+    http.Response response =await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: body
+    );
+    print(response.body);
+    return response;
   }
 }

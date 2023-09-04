@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gsheets/gsheets.dart';
-import 'package:kp_msiap/api/sheet_api.dart';
 import 'package:kp_msiap/model/sheet.dart';
-import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 
 class tableasset extends StatefulWidget {
   const tableasset({Key? key}) : super(key: key);
@@ -22,12 +19,6 @@ class _tableasset extends State<tableasset> {
   @override
   void initState() {
     super.initState();
-    sheet_api().getAssetList().then((data) {
-      setState(() {
-        this.data = data;
-        filteredData = data; // Inisialisasi filteredData dengan data awal
-      });
-    });
   }
 
   void _filterData(String query) {
@@ -38,9 +29,9 @@ class _tableasset extends State<tableasset> {
           sheet.jenis_aset.toLowerCase().contains(query.toLowerCase()) ||
           sheet.kondisi.toLowerCase().contains(query.toLowerCase()) ||
           sheet.status_pemakaian.toLowerCase().contains(query.toLowerCase()) ||
-          sheet.utilisasi.toLowerCase().contains(query.toLowerCase()) ||
-          sheet.tahun_perolehan.toLowerCase().contains(query.toLowerCase()) ||
-          sheet.umur_teknis.toLowerCase().contains(query.toLowerCase()) ||
+          sheet.utilisasi.toString().contains(query.toLowerCase()) ||
+          sheet.tahun_perolehan.toString().contains(query.toLowerCase()) ||
+          sheet.umur_teknis.toString().contains(query.toLowerCase()) ||
           sheet.sumber_dana.toLowerCase().contains(query.toLowerCase()) ||
           sheet.nilai_perolehan.toString().contains(query.toLowerCase()) ||
           sheet.nilai_buku.toString().contains(query.toLowerCase()) ||
@@ -404,9 +395,9 @@ class _AssetDataTableSource extends DataTableSource {
         if (columnVisibility[1]) DataCell(Text(asset.jenis_aset)),
         if (columnVisibility[2]) DataCell(Text(asset.kondisi)),
         if (columnVisibility[3]) DataCell(Text(asset.status_pemakaian)),
-        if (columnVisibility[4]) DataCell(Text(asset.utilisasi)),
-        if (columnVisibility[5]) DataCell(Text(asset.tahun_perolehan)),
-        if (columnVisibility[6]) DataCell(Text(asset.umur_teknis)),
+        if (columnVisibility[4]) DataCell(Text(asset.utilisasi as String)),
+        if (columnVisibility[5]) DataCell(Text(asset.tahun_perolehan as String)),
+        if (columnVisibility[6]) DataCell(Text(asset.umur_teknis as String)),
         if (columnVisibility[7]) DataCell(Text(asset.sumber_dana)),
         if (columnVisibility[8]) DataCell(Text(asset.nilai_perolehan as String)),
         if (columnVisibility[9]) DataCell(Text(asset.nilai_buku as String)),

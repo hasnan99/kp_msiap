@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:kp_msiap/api/sheet_api.dart';
+import 'package:kp_msiap/edit%20data/edit_asset_pal.dart';
 import 'package:kp_msiap/model/sheet.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert' as convert;
-import 'package:kp_msiap/widget/asset_gambar.dart';
 
 class AssetPAL extends StatefulWidget {
-  const AssetPAL({Key? key}) : super(key: key);
+  final GlobalKey<_AssetPAL> assetItemKey = GlobalKey<_AssetPAL>();
+   AssetPAL({Key? key}) : super(key: key);
 
   @override
   _AssetPAL createState() => _AssetPAL();
+
+  static void refreshData(BuildContext context) {
+    final state = _AssetPAL.of(context);
+    state.refreshData();
+  }
 }
 
 class _AssetPAL extends State<AssetPAL> {
@@ -17,15 +22,31 @@ class _AssetPAL extends State<AssetPAL> {
   List<sheet> cari_data = [];
   TextEditingController controller_cari = TextEditingController();
 
+  late Future<List<sheet>> dataFuture;
+
+  static _AssetPAL of(BuildContext context) =>
+      context.findAncestorStateOfType<_AssetPAL>()!;
+
+  Future<List<sheet>> _fetchdatapal() async {
+    List<sheet> newData = await sheet_api.getAssetPAL();
+    setState(() {
+      data = newData;
+      caridata(controller_cari.text); // Apply current search query
+    });
+    return newData;
+  }
+
+  void refreshData() {
+    setState(() {
+      dataFuture = _fetchdatapal();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-    sheet_api().getAssetPAL().then((data) {
-      setState(() {
-        this.data = data;
-        this.cari_data=data;
-      });
-    });
+    _fetchdatapal();
+    dataFuture = _fetchdatapal();
   }
 
   void caridata(String query) {
@@ -41,6 +62,15 @@ class _AssetPAL extends State<AssetPAL> {
     });
   }
 
+  String cutnamaaset(String assetName) {
+    List<String> words = assetName.split(' ');
+    if (words.length > 3) {
+      return words.sublist(0, 3).join(' ');
+    } else {
+      return assetName;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -50,256 +80,186 @@ class _AssetPAL extends State<AssetPAL> {
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               controller: controller_cari,
-              onChanged: caridata,
               decoration: InputDecoration(
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0)
-                ),
-                labelText: "Cari Asset",
+                hintText: "Cari Aset",
                 prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-
+              onChanged: caridata,
             ),
           ),
-          Container(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.68,
-              ),
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              padding: const EdgeInsets.only(top: 15),
-              itemCount: cari_data.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AssetDetailPage(data: cari_data[index]),
+          FutureBuilder<List<sheet>>(
+            future: dataFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else if (snapshot.hasData) {
+                return GridView.builder(
+                  gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.68,
+                  ),
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.only(top: 15),
+                  itemCount: cari_data.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AssetDetailPage(
+                              data: cari_data[index],
+                              refreshCallback: _fetchdatapal,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 20, horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffeef1f4),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.only(left: 10),
+                              alignment: Alignment.center,
+                              child: cari_data[index].gambar != null
+                                  ? Image.network(
+                                  cari_data[index].gambar,
+                                  height: 170)
+                                  : Text("Gambar belum ditambahkan."),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.only(left: 10),
+                              alignment: Alignment.topLeft,
+                              child:
+                              Text("ID : ${cari_data[index].Id}"),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.only(left: 10),
+                              alignment: Alignment.center,
+                              child: Text(
+                                  "Nama Aset : ${cutnamaaset(cari_data[index].nama_aset)}"),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xffeef1f4),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.only(left: 10),
-                          alignment: Alignment.center,
-                          child: cari_data[index].gambar != null
-                              ? Image.network(cari_data[index].gambar, height: 170)
-                              : Text("Gambar belum ditambahkan."),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.only(left: 10),
-                          alignment: Alignment.center,
-                          child: Text("Nama Aset : ${cari_data[index].nama_aset}"),
-                        ),
-                      ],
-                    ),
-                  ),
                 );
-              },
-            ),
-          )
+              } else {
+                return const Text('No data');
+              }
+            },
+          ),
         ],
       ),
     );
   }
 }
-class AssetDetailPage extends StatelessWidget {
-  final sheet data;
 
-  const AssetDetailPage({Key? key, required this.data}) : super(key: key);
+
+class AssetDetailPage extends StatefulWidget {
+  final sheet data;
+  final VoidCallback refreshCallback;
+
+  const AssetDetailPage({Key? key, required this.data, required this.refreshCallback}) : super(key: key);
 
   @override
-  Widget header(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          margin: const EdgeInsets.all(15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  _AssetDetailPageState createState() => _AssetDetailPageState();
+}
+
+class _AssetDetailPageState extends State<AssetDetailPage> {
+  @override
+  Widget build(BuildContext context) {
+    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ');
+    final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
+    Future<void> _refreshData() async {
+      widget.refreshCallback();
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color(0xff4B5526),
+        title: const Text("Detail Asset"),
+      ),
+      body: RefreshIndicator(
+        key: _refreshKey,
+        onRefresh: _refreshData,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: const Icon(
-                  Icons.chevron_left,
-                  size: 30,
-                ),
+              Container(
+                height: 250,
+                alignment: Alignment.center,
+                child: Image.network(widget.data.gambar, height: 250),
               ),
-              const Text(
-                'Detail Asset',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailItem("Nama Aset", widget.data.nama_aset),
+                    _buildDetailItem("Jenis Aset", widget.data.jenis_aset),
+                    _buildDetailItem("Kondisi", widget.data.kondisi),
+                    _buildDetailItem("Status Pemakaian", widget.data.status_pemakaian),
+                    _buildDetailItem("Utilisasi", widget.data.utilisasi.toString()),
+                    _buildDetailItem("Tahun Perolehan", widget.data.tahun_perolehan.toString()),
+                    _buildDetailItem("Umur Teknis", widget.data.umur_teknis.toString()),
+                    _buildDetailItem("Sumber Dana", widget.data.sumber_dana),
+                    _buildDetailItem("Nilai Perolehan", formatter.format(double.parse(widget.data.nilai_perolehan.toString()))),
+                    _buildDetailItem("Nilai Buku", formatter.format(double.parse(widget.data.nilai_buku.toString()))),
+                    _buildDetailItem("Rencana Optimisasi", widget.data.rencana_optimisasi),
+                    _buildDetailItem("Lokasi", widget.data.lokasi),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-      ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          Navigator.of(context).pushReplacement(new MaterialPageRoute(builder: (context) => EditAsset_pal(data: widget.data))).
+          whenComplete(() => _refreshData());
+        },
+        icon: const Icon(Icons.edit),
+        label: const Text("Edit Data"),
+        backgroundColor: const Color(0xff4B5526),
+      ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    String formatDate(String dateTimeString) {
-      // Parse the date-time string into a DateTime object
-      DateTime dateTime = DateTime.parse(dateTimeString);
-
-      // Format the DateTime object as per your desired format
-      String formattedDate = DateFormat('yyyy-MM-dd').format(dateTime); // Replace 'yyyy-MM-dd' with your desired format
-
-      return formattedDate;
-    }
-    return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget _buildDetailItem(String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          header(context),
-          Container(
-              alignment: Alignment.center,
-              child: Image.network(data.gambar,height: 250,)
-          ),
-          Expanded(child: SingleChildScrollView(
-            child: Container(
-              padding: const EdgeInsets.only(left: 20, top: 10, right: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Nama Aset : ${data.nama_aset}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Jenis Aset : ${data.jenis_aset}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          height: 2
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Kondisi : ${data.kondisi}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          height: 2
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Status Pemakaian : ${data.status_pemakaian}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          height: 2
-                      ),
-
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Utilisasi : ${data.utilisasi}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          height: 2
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Tahun Perolehan : ${formatDate(data.tahun_perolehan)}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          height: 2
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Umur Teknis : ${data.umur_teknis}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          height: 2
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Sumber Dana : ${data.sumber_dana}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          height: 2
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Nilai Perolehan : ${data.nilai_perolehan}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        height: 2,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Nilai Buku : ${data.nilai_buku}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        height: 2,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Rencana Optimisasi : ${data.rencana_optimisasi}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20, height: 2
-                      ),
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Lokasi : ${data.lokasi}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          height: 2
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.normal,
+              fontSize: 15,
             ),
           ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
         ],
       ),

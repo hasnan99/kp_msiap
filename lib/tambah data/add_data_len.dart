@@ -6,22 +6,21 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kp_msiap/api/sheet_api.dart';
 import 'package:kp_msiap/widget/background.dart';
-import 'api/sheet_api.dart';
-import 'model/sheet.dart';
+import 'package:http/http.dart' as http;
 import 'dart:math';
 import 'dart:io';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 
-import 'model/sheet_add.dart';
-
-class AddData extends StatefulWidget {
-  const AddData({Key? key}) : super(key: key);
+class AddData_len extends StatefulWidget {
+  const AddData_len({Key? key}) : super(key: key);
 
   @override
-  _AddDataState createState() => _AddDataState();
+  _AddData_len createState() => _AddData_len();
 }
 
-class _AddDataState extends State<AddData> {
+class _AddData_len extends State<AddData_len> {
   final _auth = FirebaseAuth.instance;
   late User? user;
   bool isImageAdded = false;
@@ -59,11 +58,6 @@ class _AddDataState extends State<AddData> {
   TextEditingController lokasicontrol = TextEditingController();
 
   void _submitForm() async {
-    if(imageUrl.isEmpty){
-      ScaffoldMessenger.of(context).showSnackBar
-        (const SnackBar(content: Text("Masukkan Gambar")));
-      return;
-    }
     if(_formKey.currentState!.validate()){
       Map<String,String>datasend={
         'image':imageUrl,
@@ -71,39 +65,43 @@ class _AddDataState extends State<AddData> {
       _collectionReference.add(datasend);
     }
     String url = imageUrl;
+    String nama_table="len_assets";
+    String nama_aset = nama_asetcontrol.text;
+    String jenis_aset = jenis_asetcontrol.text;
+    String kondisi = kondisicontrol.text;
+    String status_pemakaian = status_pemakaiancontrol.text;
+    int utilitas = int.parse(utilisasicontrol.text );
+    int tahun_perolehan =int.parse(tahun_perolehancontrol.text);
+    int umur_teknis = int.parse(umur_tekniscontrol.text);
+    String sumber_dana = sumber_danacontrol.text;
+    int nilai_perolehan = int.parse(nilai_perolehancontrol.text);
+    int nilai_buku = int.parse(nilai_bukucontrol.text);
+    String rencana_optimisasi = rencana_optimisasicontrol.text;
+    String lokasi = lokasicontrol.text;
+    String user_edit=user!.email.toString();
 
-    if (_formKey.currentState!.validate()) {
-      sheet_add feedbackForm = sheet_add(
-        nama_asetcontrol.text,
-        jenis_asetcontrol.text,
-        kondisicontrol.text,
-        status_pemakaiancontrol.text,
-        utilisasicontrol.text,
-        tahun_perolehancontrol.text,
-        umur_tekniscontrol.text,
-        sumber_danacontrol.text,
-        nilai_perolehancontrol.text,
-        nilai_bukucontrol.text,
-        rencana_optimisasicontrol.text,
-        lokasicontrol.text,
-        url,
-      );
-
-      sheet_api sheetAPI = sheet_api();
-
-      showSnackbarwarning("Menambahkan Asset...");
-
-      sheetAPI.submitForm(feedbackForm, (String response) {
-        if (kDebugMode) {
-          print("Response: $response");
-        }
-        if (response == sheet_api.STATUS_SUCCESS) {
-          notifikasi();
-          showSnackbar("Berhasil Menambahkan");
-        } else {
-          showSnackbarfail("Gagal Tambah Asset");
-        }
-      });
+    http.Response response=await sheet_api.tambahdata(nama_table, nama_aset, jenis_aset, kondisi, status_pemakaian, utilitas,
+        tahun_perolehan, umur_teknis, sumber_dana, nilai_perolehan, nilai_buku, rencana_optimisasi, lokasi,url,user_edit);
+    if(response.body=="success"){
+      notifikasi();
+      showSnackbar("Berhasil Menambahkan Asset");
+      Navigator.pop(context,true);
+      _formKey.currentState!.reset();
+      imageUrl = '';
+      nama_asetcontrol.clear();
+      jenis_asetcontrol.clear();
+      kondisicontrol.clear();
+      status_pemakaiancontrol.clear();
+      utilisasicontrol.clear();
+      tahun_perolehancontrol.clear();
+      umur_tekniscontrol.clear();
+      sumber_danacontrol.clear();
+      nilai_perolehancontrol.clear();
+      nilai_bukucontrol.clear();
+      rencana_optimisasicontrol.clear();
+      lokasicontrol.clear();
+    }else{
+      showSnackbarfail("Gagal Menambahkan Asset");
     }
   }
 
@@ -114,19 +112,6 @@ class _AddDataState extends State<AddData> {
           title: 'Berhasil',
           message: message,
           contentType: ContentType.success,
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void showSnackbarwarning(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: AwesomeSnackbarContent(
-          title: '.....',
-          message: message,
-          contentType: ContentType.warning,
         ),
         behavior: SnackBarBehavior.floating,
       ),
@@ -152,8 +137,8 @@ class _AddDataState extends State<AddData> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: const Text("Tambah data"),
-        backgroundColor: const Color(0xfff20403),
+        title: const Text("Tambah data Len"),
+        backgroundColor: const Color(0xff4B5526),
       ),
       body: SizedBox(
         height: height,
@@ -174,8 +159,8 @@ class _AddDataState extends State<AddData> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Color(0xfff20403),
-                          Color(0xfff20403),
+                          Color(0xff4B5526),
+                          Color(0xff4B5526),
                         ],
                       ),
                     ),
@@ -225,8 +210,8 @@ class _AddDataState extends State<AddData> {
                               TextFormField(
                                   controller: nama_asetcontrol,
                                   validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                    if (value == null || value.isEmpty) {
+                                      return nama_asetcontrol.text="Na";
                                     }
                                     return null;
                                   },
@@ -252,6 +237,12 @@ class _AddDataState extends State<AddData> {
                               ),
                               TextFormField(
                                   controller: jenis_asetcontrol,
+                                  validator: (value){
+                                    if (value == null || value.isEmpty) {
+                                      return jenis_asetcontrol.text="Na";
+                                    }
+                                    return null;
+                                  },
                                   decoration: const InputDecoration(
                                       border: InputBorder.none,
                                       fillColor: Color(0xffD6D6D6),
@@ -275,8 +266,8 @@ class _AddDataState extends State<AddData> {
                               TextFormField(
                                   controller: kondisicontrol,
                                   validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                    if (value == null || value.isEmpty) {
+                                      return kondisicontrol.text="Na";
                                     }
                                     return null;
                                   },
@@ -303,8 +294,8 @@ class _AddDataState extends State<AddData> {
                               TextFormField(
                                   controller: status_pemakaiancontrol,
                                   validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                    if (value == null || value.isEmpty) {
+                                      return status_pemakaiancontrol.text="Na";
                                     }
                                     return null;
                                   },
@@ -331,9 +322,9 @@ class _AddDataState extends State<AddData> {
                               TextFormField(
                                   controller: utilisasicontrol,
                                   keyboardType: TextInputType.number,
-                                  validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                  validator: (value){
+                                    if (value == null || value.isEmpty) {
+                                      return utilisasicontrol.text=0.toString();
                                     }
                                     return null;
                                   },
@@ -360,9 +351,9 @@ class _AddDataState extends State<AddData> {
                               TextFormField(
                                   controller: tahun_perolehancontrol,
                                   keyboardType: TextInputType.number,
-                                  validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                  validator: (value){
+                                    if (value == null || value.isEmpty) {
+                                      return tahun_perolehancontrol.text=0.toString();
                                     }
                                     return null;
                                   },
@@ -389,9 +380,10 @@ class _AddDataState extends State<AddData> {
                               ),
                               TextFormField(
                                   controller: umur_tekniscontrol,
-                                  validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                  keyboardType: TextInputType.number,
+                                  validator: (value){
+                                    if (value == null || value.isEmpty) {
+                                      return umur_tekniscontrol.text=0.toString();
                                     }
                                     return null;
                                   },
@@ -419,8 +411,8 @@ class _AddDataState extends State<AddData> {
                               TextFormField(
                                   controller: sumber_danacontrol,
                                   validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                    if (value == null || value.isEmpty) {
+                                      return sumber_danacontrol.text="Na";
                                     }
                                     return null;
                                   },
@@ -447,9 +439,10 @@ class _AddDataState extends State<AddData> {
                               ),
                               TextFormField(
                                   controller: nilai_perolehancontrol,
-                                  validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                  keyboardType: TextInputType.number,
+                                  validator: (value){
+                                    if (value == null || value.isEmpty) {
+                                      return nilai_perolehancontrol.text=0.toString();
                                     }
                                     return null;
                                   },
@@ -476,9 +469,10 @@ class _AddDataState extends State<AddData> {
                               ),
                               TextFormField(
                                   controller: nilai_bukucontrol,
-                                  validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                  keyboardType: TextInputType.number,
+                                  validator: (value){
+                                    if (value == null || value.isEmpty) {
+                                      return nilai_bukucontrol.text=0.toString();
                                     }
                                     return null;
                                   },
@@ -506,8 +500,8 @@ class _AddDataState extends State<AddData> {
                               TextFormField(
                                   controller: rencana_optimisasicontrol,
                                   validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                    if (value == null || value.isEmpty) {
+                                      return rencana_optimisasicontrol.text="Na";
                                     }
                                     return null;
                                   },
@@ -535,8 +529,8 @@ class _AddDataState extends State<AddData> {
                               TextFormField(
                                   controller: lokasicontrol,
                                   validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Tidak Boleh Kosong';
+                                    if (value == null || value.isEmpty) {
+                                      return lokasicontrol.text="Na";
                                     }
                                     return null;
                                   },
@@ -555,6 +549,10 @@ class _AddDataState extends State<AddData> {
                             ),
                             isImageAdded ? GestureDetector(
                               onTap: () {
+                                setState(() {
+                                  imageUrl = '';
+                                  isImageAdded = false;
+                                });
                               },
                               child: Image.network(
                                 imageUrl!,
@@ -565,6 +563,7 @@ class _AddDataState extends State<AddData> {
                               onPressed: () async {
                                 ImagePicker imagepicker = ImagePicker();
                                 XFile? file = await imagepicker.pickImage(source: ImageSource.camera);
+                                EasyLoading.show(status: 'Mengupload Gambar');
                                 if (kDebugMode) {
                                   print('${file?.path}');
                                 }
@@ -581,6 +580,7 @@ class _AddDataState extends State<AddData> {
                                   await refencegambarupload.putFile(File(file.path));
                                   imageUrl = await refencegambarupload.getDownloadURL();
                                   setState(() {
+                                    EasyLoading.showSuccess("Berhasil");
                                     isImageAdded = true;
                                   });
                                 } catch (error) {
@@ -599,7 +599,7 @@ class _AddDataState extends State<AddData> {
                     Center(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          primary: const Color(0xfff20403),
+                          primary: const Color(0xff4B5526),
                           onPrimary: Colors.white,
                         ),
                         onPressed: _submitForm,
@@ -618,6 +618,22 @@ class _AddDataState extends State<AddData> {
   }
 
   void notifikasi() {
+   // final endpoint = "https://fcm.googleapis.com/fcm/send";
+
+    //final header = {
+      //'Authorization': 'key=paste-firebase-cloud-messaging-server-token',
+      //'Content-Type': 'application/json'
+    //};
+
+
+   // http.post(
+      //  Uri.parse(endpoint),
+        //headers: header,
+       // body: jsonEncode({
+         // "to": "/topics/admin", // topic name
+          //"notification": {"body": "YOUR NOTIFICATION BODY TEXT", "title": "YOUR NOTIFICATION TITLE TEXT", "sound": "default"}
+        //})
+    //);
     AwesomeNotifications().createNotification(
         content: NotificationContent(
             id: 10,

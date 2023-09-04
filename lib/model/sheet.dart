@@ -1,21 +1,24 @@
+
 class sheet{
-  int No;
+  int Id;
   String nama_aset;
   String jenis_aset;
   String kondisi;
   String status_pemakaian;
-  String utilisasi;
-  String tahun_perolehan;
-  String umur_teknis;
+  int utilisasi;
+  int tahun_perolehan;
+  int umur_teknis;
   String sumber_dana;
   int nilai_perolehan;
   int nilai_buku;
   String rencana_optimisasi;
   String lokasi;
   String gambar;
+  String user;
+  String timestamp;
 
   sheet(
-      this.No,
+      this.Id,
       this.nama_aset,
       this.jenis_aset,
       this.kondisi,
@@ -28,27 +31,32 @@ class sheet{
       this.nilai_buku,
       this.rencana_optimisasi,
       this.lokasi,
-      this.gambar);
+      this.gambar,
+      this.user,
+      this.timestamp);
 
   factory sheet.fromJson(Map<String,dynamic>json){
     return sheet(
-        json['No'] as int,
-        json['Nama_Aset'].toString(),
-        json['Jenis_Aset'].toString(),
-        json['Kondisi'].toString(),
-        json['Status_Pemakaian'].toString(),
-        json['Utilisasi'].toString(),
-        json['Tahun_Perolehan'].toString(),
-        json['Umur_teknis'].toString(),
-        json['Sumber_Dana'].toString(),
-        json['Nilai_Perolehan'] as int,
-        json['Nilai_Buku'] as int,
-        json['Rencana_Optimisasi'].toString(),
-        json['Lokasi'].toString(),
-        json['gambar'].toString());
+      json['Id'] as int,
+      json['nama_asset'] as String,
+      json['jenis_asset'] as String,
+      json['kondisi'] as String,
+      json['status_pemakaian'] as String,
+      json['utilisasi'] as int,
+      json['tahun_perolehan'] as int,
+      json['umur_teknis'] as int,
+      json['sumber_dana'] as String,
+      json['nilai_perolehan'] as int,
+      json['nilai_buku'] as int,
+      json['rencana_optimisasi'] as String,
+      json['lokasi'] as String,
+      json['gambar'] as String,
+      json['user_edit'] as String,
+      json['date_edit'] as String,
+    );
   }
   Map<String,dynamic> toJson()=>{
-      'No':No ,
+      'Id':Id ,
       'nama_aset':nama_aset,
       'jenis_aset':jenis_aset,
       'kondisi':kondisi,
@@ -62,5 +70,7 @@ class sheet{
       'rencana_optimisasi':rencana_optimisasi,
       'lokasi':lokasi,
       'gambar':gambar,
+      'user':user,
+      'timestamp':timestamp
     };
 }

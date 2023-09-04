@@ -12,10 +12,17 @@ class auth{
         email: email, password: password);
   }
 
-  Future<void>login(String email,String password)async{
-    final user=await _auth.signInWithEmailAndPassword(
+  Future<UserCredential?> login(String email, String password) async {
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
-        password: password);
+        password: password,
+      );
+      return userCredential;
+    } catch (error) {
+      // Handle login errors
+      return null;
+    }
   }
 
   static Future<http.Response> daftar(String username,String email,String password) async{

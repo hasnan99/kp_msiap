@@ -1,13 +1,9 @@
-import 'dart:convert';
-
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kp_msiap/login.dart';
-import 'api/auth.dart';
-import 'package:http/http.dart' as http;
 
 class register extends StatefulWidget {
   const register({Key? key}) : super(key: key);
@@ -27,7 +23,7 @@ class _register extends State<register> {
     final size = MediaQuery.of(context).size;
     return Scaffold(
       body: Scaffold(
-        backgroundColor: const Color(0xfff20403),
+        backgroundColor: const Color(0xff4B5526),
         resizeToAvoidBottomInset: false,
         body: SafeArea(
           child:SingleChildScrollView(
@@ -420,7 +416,7 @@ class _register extends State<register> {
         width: size.width * 0.7,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(50.0),
-          color: const Color(0xfff20403),
+          color: const Color(0xff4B5526),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF4C2E84).withOpacity(0.2),
@@ -444,25 +440,13 @@ class _register extends State<register> {
   }
 
   void handelsubmit() async {
-    String username=usernameController.text.toString();
-    String email=emailController.text.toString();
-    String password=passController.text.toString();
-    bool emailvalid=RegExp(
-        r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-        .hasMatch(email);
-
-    if(emailvalid){
-      http.Response response = await auth.daftar(username, email, password);
-      Map responsemap=jsonDecode(response.body);
-      if(response.statusCode==200){
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (BuildContext context)=> const login()));
-      }else{
-        print(responsemap.values.first[0]);
+    if(emailController.text.isNotEmpty && passController.text.isNotEmpty){
+      try{
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(email: emailController.text, password: passController.text);
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>const login()));
+      }catch(e){
+        showSnackbar("Email Sudah Terdaftar");
       }
-    }else{
-      print("email tidak valid");
     }
 
   }

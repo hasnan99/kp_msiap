@@ -6,7 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle, rootBundle;
 import 'package:csv/csv.dart';
-import 'package:excel_to_json/excel_to_json.dart';
+
+import 'model/sheet.dart';
 
 class upload_excel extends StatefulWidget {
   const upload_excel({Key? key}) : super(key: key);
@@ -17,9 +18,9 @@ class upload_excel extends StatefulWidget {
 
 class _upload_excel extends State<upload_excel> {
   List<DataRow> _dataRows = [];
+  List<sheet>data=[];
   List<String>? _headerRow;
   String? filePath;
-  final List<DataColumn> _dataColumns = [];
 
   @override
   Widget build(BuildContext context) {
@@ -43,16 +44,21 @@ class _upload_excel extends State<upload_excel> {
             onPressed: _pickFileexcel,
             child: const Text("Upload File excel")
           ),
-          if (_dataColumns != null && _dataRows.isNotEmpty)
+          if (_dataRows.isNotEmpty)
             Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: _headerRow!
-                      .map((header) => DataColumn(label: Text(header)))
-                      .toList(),
-                  rows: _dataRows,
-                ),
+              child: ListView(
+                scrollDirection: Axis.vertical,
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: _headerRow!
+                          .map((header) => DataColumn(label: Text(header)))
+                          .toList(),
+                      rows: _dataRows,
+                    ),
+                  ),
+                ],
               ),
             ),
         ],
@@ -76,16 +82,11 @@ class _upload_excel extends State<upload_excel> {
     if (excel.tables.isNotEmpty) {
       var table = excel.tables[excel.tables.keys.first]!;
       _headerRow = table.rows[0].map((cell) => cell?.value.toString()).cast<String>().toList();
-
-      _dataRows = table.rows
-          .skip(1)
-          .map((row) => DataRow(
-        cells: row
-            .map<DataCell>((cell) => DataCell(Text(cell!.value.toString())))
+      _dataRows = table.rows.skip(1).map((row) => DataRow(
+        cells: row.map<DataCell>((cell) => DataCell(Text(cell?.value.toString() ?? '')))
             .toList(),
       ))
           .toList();
-
       setState(() {});
     }
   }

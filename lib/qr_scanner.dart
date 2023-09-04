@@ -9,8 +9,8 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter/material.dart';
 import 'package:kp_msiap/detail_aset.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
-import 'api/sheet_api.dart';
 import 'model/sheet.dart';
+import 'package:kp_msiap/api/sheet_api.dart';
 
 class ScanQR extends StatefulWidget {
   const ScanQR({Key? key}) : super(key: key);
@@ -30,24 +30,20 @@ class _ScanQR extends State<ScanQR> {
   @override
   void initState() {
     super.initState();
-    generatedata().then((data) {
-      setState(() {
-        dataList = data;
-      });
-    });
-    sheet_api().getAssetList().then((data) {
-      setState(() {
-        this.data = data;
-      });
-    });
+    _fetchdatalen();
   }
 
-  Future generatedata() async {
-    var response = await http.get(Uri.parse(
-        'https://script.google.com/macros/s/AKfycbz_3ydN4P3f9zSbGIOIa9UNP9xBzVVjy19pAwkZuY1jIcRYgqTrBHnwcA8IprC5xvY/exec'));
-    var list = json.decode(response.body).cast<Map<String, dynamic>>();
-    var datalist = await list.map<sheet>((json) => sheet.fromJson(json)).toList();
-    return datalist;
+  Future<void> _fetchdatalen() async {
+    final response = await http.get(Uri.parse(sheet_api.URL_len));
+    if (response.statusCode == 200) {
+      final List<dynamic> json = jsonDecode(response.body);
+      setState(() {
+        data = json.map((item) => sheet.fromJson(item)).toList();
+        dataList = List.from(data);
+      });
+    } else {
+      throw Exception("Failed to load Data");
+    }
   }
 
   showSnackbarwarning(String message) {
@@ -80,99 +76,118 @@ class _ScanQR extends State<ScanQR> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: <Widget>[
-          Expanded(flex: 5, child: _buildQrView(context)),
-          Expanded(
-            flex: 1,
-            child: FittedBox(
-              fit: BoxFit.contain,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
+    return WillPopScope(
+      onWillPop: () => exit_app(context),
+      child:Scaffold(
+        body: Column(
+          children: <Widget>[
+            Expanded(flex: 5, child: _buildQrView(context)),
+            Expanded(
+              flex: 1,
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
 
-                      Container(
-                        margin: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                            onPressed: () async {
-                              await controller?.toggleFlash();
-                              setState(() {});
-                            },
-                            child: FutureBuilder(
-                              future: controller?.getFlashStatus(),
-                              builder: (context, snapshot) {
-                                return Text('Flash: ${snapshot.data}');
+                        Container(
+                          margin: const EdgeInsets.all(8),
+                          child: ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor:
+                                MaterialStateProperty.all(Color(0xff4B5526)),
+                              ),
+                              onPressed: () async {
+                                await controller?.toggleFlash();
+                                setState(() {});
                               },
-                            )),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                            onPressed: () async {
-                              await controller?.flipCamera();
-                              setState(() {});
-                            },
-                            child: FutureBuilder(
-                              future: controller?.getCameraInfo(),
-                              builder: (context, snapshot) {
-                                if (snapshot.data != null) {
-                                  return Text(
-                                      'Kamera  ${describeEnum(snapshot.data!)}');
-                                } else {
-                                  return const Text('loading');
-                                }
+                              child: FutureBuilder(
+                                future: controller?.getFlashStatus(),
+                                builder: (context, snapshot) {
+                                  return Text('Flash: ${snapshot.data}');
+                                },
+                              )),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.all(8),
+                          child: ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor:
+                                MaterialStateProperty.all(Color(0xff4B5526)),
+                              ),
+                              onPressed: () async {
+                                await controller?.flipCamera();
+                                setState(() {});
                               },
-                            )),
-                      )
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Container(
-                        margin: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            await controller?.pauseCamera();
-                          },
-                          child: const Text('pause',
-                              style: TextStyle(fontSize: 20)),
-                        ),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            await controller?.resumeCamera();
-                          },
-                          child: const Text('resume',
-                              style: TextStyle(fontSize: 20)),
-                        ),
-                      ),
-                        if (isLoading)
-                        Expanded(
-                          child: Container(
-                            color: Colors.black54,
-                            child: const Center(
-                              child: SpinKitChasingDots( // Replace with any loading indicator from the flutter_spinkit package
-                                color: Colors.white,
-                                size: 50.0,),
+                              child: FutureBuilder(
+                                future: controller?.getCameraInfo(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.data != null) {
+                                    return Text(
+                                        'Kamera  ${describeEnum(snapshot.data!)}');
+                                  } else {
+                                    return const Text('loading');
+                                  }
+                                },
+                              )),
+                        )
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Container(
+                          margin: const EdgeInsets.all(8),
+                          child: ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor:
+                              MaterialStateProperty.all(Color(0xff4B5526)),
                             ),
+                            onPressed: () async {
+                              await controller?.pauseCamera();
+                            },
+                            child: const Text('pause',
+                                style: TextStyle(fontSize: 20)),
                           ),
                         ),
-                    ],
-                  ),
-                ],
+                        Container(
+                          margin: const EdgeInsets.all(8),
+                          child: ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor:
+                              MaterialStateProperty.all(Color(0xff4B5526)),
+                            ),
+                            onPressed: () async {
+                              await controller?.resumeCamera();
+                            },
+                            child: const Text('resume',
+                                style: TextStyle(fontSize: 20)),
+                          ),
+                        ),
+                        if (isLoading)
+                          Expanded(
+                            child: Container(
+                              color: Colors.black54,
+                              child: const Center(
+                                child: SpinKitChasingDots( // Replace with any loading indicator from the flutter_spinkit package
+                                  color: Colors.white,
+                                  size: 50.0,),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          )
-        ],
+            )
+          ],
+        ),
       ),
     );
   }
@@ -186,7 +201,7 @@ class _ScanQR extends State<ScanQR> {
       key: qrKey,
       onQRViewCreated: _onQRViewCreated,
       overlay: QrScannerOverlayShape(
-          borderColor: Colors.red,
+          borderColor: Color(0xff4B5526),
           borderRadius: 10,
           borderLength: 30,
           borderWidth: 10,
@@ -207,11 +222,9 @@ class _ScanQR extends State<ScanQR> {
             String? hasil = result?.code;
             isLoading = true;
             sheet? foundAsset = dataList.firstWhereOrNull(
-                  (asset) => asset.nama_aset == hasil,
-              // Return null instead of showing a snackbar here
+                  (asset) => asset.Id.toString() == hasil,
             );
             if (foundAsset != null) {
-              // Set the flag to true before navigating
               setState(() {
                 isNavigating = true;
               });
@@ -221,21 +234,16 @@ class _ScanQR extends State<ScanQR> {
                   builder: (context) => DetailAset(data: foundAsset),
                 ),
               ).then((_) {
-                // Reset the flag to false after navigating back
                 setState(() {
                   isNavigating = false;
                 });
-                // Start scanning again
-                controller?.resumeCamera();
+                controller.resumeCamera();
               });
             } else {
-              showSnackbarwarning("Data tidak ditemukan");
               setState(() {
                 isLoading = false; // Set loading to false if the asset is not found
               });
             }
-          } else {
-            showSnackbarwarning("Data tidak ditemukan");
           }
         });
       }
@@ -255,5 +263,32 @@ class _ScanQR extends State<ScanQR> {
   void dispose() {
     controller?.dispose();
     super.dispose();
+  }
+
+  Future <bool> exit_app(BuildContext context) async{
+    bool exit=await showDialog(
+      context: context,
+      builder: (BuildContext context){
+        return AlertDialog(
+          title: const Text("Keluar Aplikasi"),
+          content: const Text("Yakin ingin keluar dari aplikasi"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: (){
+                Navigator.of(context).pop(false);
+              },
+              child: const Text("Tidak"),
+            ),
+            TextButton(
+              onPressed: (){
+                Navigator.of(context).pop(true);
+              },
+              child: const Text("Ya"),
+            ),
+          ],
+        );
+      },
+    );
+    return exit;
   }
 }

@@ -1,13 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:kp_msiap/widget/asset_DI.dart';
-import 'package:kp_msiap/widget/asset_dahana.dart';
-import 'package:kp_msiap/excel.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:kp_msiap/tambah%20data/add_data_pal.dart';
 import 'package:kp_msiap/widget/asset_pal.dart';
-import 'beranda.dart';
-import 'beranda_DI.dart';
-import 'beranda_dahana.dart';
-import 'beranda_pindad.dart';
+import 'package:refresh/refresh.dart';
 
 class Beranda_PAL extends StatefulWidget {
   const Beranda_PAL({Key? key}) : super(key: key);
@@ -19,12 +15,10 @@ class Beranda_PAL extends StatefulWidget {
 class _Beranda_PAL extends State<Beranda_PAL> {
   int currentIndex = 0;
 
-  final _auth = FirebaseAuth.instance;
-  late User? user;
+  RefreshController _refreshController =
+  RefreshController(initialRefresh: false);
 
-  void getuseremail() async {
-    user = _auth.currentUser; // Mengambil data user setelah berhasil login
-  }
+  AssetPAL assetPAL = AssetPAL();
 
   void onTabTapped(int index) {
     setState(() {
@@ -35,28 +29,89 @@ class _Beranda_PAL extends State<Beranda_PAL> {
   @override
   void initState() {
     super.initState();
-    getuseremail();
+  }
+
+  Future <void> _onRefresh() async{
+    await Future.delayed(const Duration(milliseconds: 1000));
+    setState(() {
+      assetPAL.assetItemKey.currentState?.refreshData();
+    });
+    _refreshController.refreshCompleted();
+  }
+
+  Future <void> _onLoading() async{
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() {// Create an instance of AssetItem
+      assetPAL.assetItemKey.currentState?.refreshData();
+    });
+    _refreshController.loadComplete();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xff4B5526),
         title: const Text('Daftar Aset PAL'),
       ),
-      body: ListView(
+      body: SmartRefresher(
+        controller: _refreshController,
+        onRefresh: _onRefresh,
+        onLoading: _onLoading,
+        enablePullDown: true,
+        enablePullUp: true,
+        child:ListView(
+          children: [
+            Container(
+              padding: const EdgeInsets.only(top: 15),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+              ),
+              child:  Column(
+                children: [
+                  AssetPAL(
+                    key: assetPAL.assetItemKey,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: SpeedDial(
+        child: const Icon(Icons.add),
+        animatedIconTheme: const IconThemeData(size: 22.0),
+        backgroundColor: const Color(0xff4B5526),
+        label: const Text("Tambah Asset"),
+        visible: true,
+        curve: Curves.bounceIn,
         children: [
-          Container(
-            padding: const EdgeInsets.only(top: 15),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-            ),
-            child: const Column(
-              children: [
-                AssetPAL(),
-              ],
-            ),
+          SpeedDialChild(
+            child: const Icon(Icons.add),
+            backgroundColor: Colors.white,
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context)=>const AddData_pal()));
+            },
+            label: 'Tambah Asset',
+            labelStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                fontSize: 16.0),
+            labelBackgroundColor: const Color(0xff4B5526),
+          ),
+          SpeedDialChild(
+            child: const Icon(Icons.qr_code_scanner),
+            backgroundColor: Colors.white,
+            onTap: () {
+
+            },
+            label: 'Tambah dengan Scan QR',
+            labelStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                fontSize: 16.0),
+            labelBackgroundColor: const Color(0xff4B5526),
           ),
         ],
       ),

@@ -6,7 +6,8 @@ import 'package:kp_msiap/widget/asset_DI.dart';
 import 'package:refresh/refresh.dart';
 
 class Beranda_DI extends StatefulWidget {
-  const Beranda_DI({Key? key}) : super(key: key);
+  final String query;
+  const Beranda_DI({Key? key, required this.query}) : super(key: key);
 
   @override
   _Beranda_DI createState() => _Beranda_DI();
@@ -18,7 +19,7 @@ class _Beranda_DI extends State<Beranda_DI> {
   RefreshController _refreshController =
   RefreshController(initialRefresh: false);
 
-  AssetDI assetDI = AssetDI();
+  AssetDI assetDI = AssetDI(query: '',);
 
 
   void onTabTapped(int index) {
@@ -40,14 +41,6 @@ class _Beranda_DI extends State<Beranda_DI> {
     _refreshController.refreshCompleted();
   }
 
-  Future <void> _onLoading() async{
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {// Create an instance of AssetItem
-      assetDI.assetItemKey.currentState?.refreshData();
-    });
-    _refreshController.loadComplete();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,8 +51,7 @@ class _Beranda_DI extends State<Beranda_DI> {
       body: SmartRefresher(
         controller: _refreshController,
         onRefresh: _onRefresh,
-        onLoading: _onLoading,
-        enablePullUp: true,
+        enablePullUp: false,
         enablePullDown: true,
         child:ListView(
           children: [
@@ -72,6 +64,7 @@ class _Beranda_DI extends State<Beranda_DI> {
                 children: [
                   AssetDI(
                     key: assetDI.assetItemKey,
+                    query:widget.query,
                   ),
               ],
             ),

@@ -3,7 +3,6 @@ import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:kp_msiap/link_asset.dart';
 import 'package:kp_msiap/link_news.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 
 class BukaLink_News extends StatefulWidget {
@@ -28,7 +27,6 @@ Future<List<Map<String, dynamic>>> fetchDataFromGoogleSheets(String link, String
     throw Exception('Gagal mengambil data dari Google Sheets: ${response.statusCode}');
   }
 }
-
 
 class _BukaLink_News extends State<BukaLink_News> {
   @override
@@ -74,7 +72,6 @@ class _BukaLink_News extends State<BukaLink_News> {
               onPressed: () async{
                 try {
                   list = await fetchDataFromGoogleSheets(controller_link.text, sheetname.text);
-                  print(list);
                   Navigator.push(
                     context,
                     MaterialPageRoute(

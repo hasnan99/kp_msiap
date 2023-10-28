@@ -11,11 +11,13 @@ import 'package:kp_msiap/beranda.dart';
 import 'package:kp_msiap/register.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api/auth.dart';
+import 'model/kurs_helper.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await firebasepush().initNotif();
+  DatabaseHelper databaseHelper = DatabaseHelper();
+  await databaseHelper.initializeDatabase();
   SharedPreferences prefs = await SharedPreferences.getInstance();
   var uid = prefs.getString('uid');
   AwesomeNotifications().initialize(

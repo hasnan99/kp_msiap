@@ -6,7 +6,8 @@ import 'package:kp_msiap/widget/asset_pindad.dart';
 import 'package:refresh/refresh.dart';
 
 class Beranda_pindad extends StatefulWidget {
-  const Beranda_pindad({Key? key}) : super(key: key);
+  final String query;
+  const Beranda_pindad({Key? key, required this.query}) : super(key: key);
 
   @override
   _Beranda_pindad createState() => _Beranda_pindad();
@@ -18,7 +19,7 @@ class _Beranda_pindad extends State<Beranda_pindad> {
   RefreshController _refreshController =
   RefreshController(initialRefresh: false);
 
-  Assetpindad assetpindad = Assetpindad();
+  Assetpindad assetpindad = Assetpindad(query: '',);
 
   void onTabTapped(int index) {
     setState(() {
@@ -39,14 +40,6 @@ class _Beranda_pindad extends State<Beranda_pindad> {
     _refreshController.refreshCompleted();
   }
 
-  Future <void> _onLoading() async{
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {// Create an instance of AssetItem
-      assetpindad.assetItemKey.currentState?.refreshData();
-    });
-    _refreshController.loadComplete();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,8 +50,7 @@ class _Beranda_pindad extends State<Beranda_pindad> {
       body:SmartRefresher(
         controller: _refreshController,
         onRefresh: _onRefresh,
-        onLoading: _onLoading,
-        enablePullUp: true,
+        enablePullUp: false,
         enablePullDown: true,
         child: ListView(
           children: [
@@ -71,6 +63,7 @@ class _Beranda_pindad extends State<Beranda_pindad> {
                 children: [
                   Assetpindad(
                     key: assetpindad.assetItemKey,
+                    query:widget.query,
                   ),
                 ],
               ),

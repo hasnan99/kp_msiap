@@ -6,7 +6,8 @@ import 'package:kp_msiap/widget/asset_pal.dart';
 import 'package:refresh/refresh.dart';
 
 class Beranda_PAL extends StatefulWidget {
-  const Beranda_PAL({Key? key}) : super(key: key);
+  final String query;
+  const Beranda_PAL({Key? key, required this.query}) : super(key: key);
 
   @override
   _Beranda_PAL createState() => _Beranda_PAL();
@@ -18,7 +19,7 @@ class _Beranda_PAL extends State<Beranda_PAL> {
   RefreshController _refreshController =
   RefreshController(initialRefresh: false);
 
-  AssetPAL assetPAL = AssetPAL();
+  AssetPAL assetPAL = AssetPAL(query: '',);
 
   void onTabTapped(int index) {
     setState(() {
@@ -39,14 +40,6 @@ class _Beranda_PAL extends State<Beranda_PAL> {
     _refreshController.refreshCompleted();
   }
 
-  Future <void> _onLoading() async{
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {// Create an instance of AssetItem
-      assetPAL.assetItemKey.currentState?.refreshData();
-    });
-    _refreshController.loadComplete();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,9 +50,8 @@ class _Beranda_PAL extends State<Beranda_PAL> {
       body: SmartRefresher(
         controller: _refreshController,
         onRefresh: _onRefresh,
-        onLoading: _onLoading,
+        enablePullUp: false,
         enablePullDown: true,
-        enablePullUp: true,
         child:ListView(
           children: [
             Container(
@@ -71,6 +63,7 @@ class _Beranda_PAL extends State<Beranda_PAL> {
                 children: [
                   AssetPAL(
                     key: assetPAL.assetItemKey,
+                    query:widget.query,
                   ),
                 ],
               ),

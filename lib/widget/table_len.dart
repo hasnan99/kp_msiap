@@ -7,8 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:kp_msiap/chart/bart_chart_len.dart';
 import 'package:kp_msiap/widget/table_PAL.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
-
 import '../chart/pie_chart_len.dart';
+import '../model/kurs.dart';
+import '../model/kurs_helper.dart';
 import '../model/sheet_chart.dart';
 
 class TableAsset extends StatefulWidget {
@@ -26,8 +27,9 @@ class _TableAssetState extends State<TableAsset> {
   late var jsondata;
   DataGridController _dataGridController = DataGridController();
   late _dataexcel dataexcel;
+  late DatabaseHelper _databaseHelper;
 
-  final List<bool> _hiddenColumns = [false, false, false, false, false,false,false,false,false,false,false,false,false];
+  final List<bool> _hiddenColumns = [false, false, false, false, false,false,false,false,false,false,false,false,false,false];
 
   final List<String> _columnNames = [
     'Nama Aset',
@@ -39,23 +41,60 @@ class _TableAssetState extends State<TableAsset> {
     'Umur Teknis',
     'Sumber Dana',
     'Nilai Perolehan',
+    'Kurs',
     'Nilai Buku',
     'Rencana Optimisasi',
     'Lokasi',
     'Gambar',
   ];
 
+  Map<int, double> exchangeRates = {
+    2000:9595,
+    2001:10400,
+    2002:8940,
+    2003:8465,
+    2004:9290,
+    2005:9830,
+    2006:9020,
+    2007:9419,
+    2008:10950,
+    2009:9400,
+    2010:8911,
+    2011:9068,
+    2012:9670,
+    2013:12189,
+    2014:12440,
+    2015:13795,
+    2016:13436,
+    2017:13548,
+    2018:14481,
+    2019:13901,
+    2020:14105,
+    2021:14269,
+    2022:15731,
+};
+
+  Future<void> _loadExchangeRates() async {
+    final exchangeRatesFromDB = await _databaseHelper.getExchangeRates();
+    exchangeRatesFromDB.forEach((rate) {
+      exchangeRates[rate.year] = rate.rate;
+    });
+
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
+    _databaseHelper = DatabaseHelper();
+    _loadExchangeRates();
   }
-
 
   Future generatedata() async {
     final response = await http.get(Uri.parse(sheet_api.URL_len));
     var list = json.decode(response.body);
     List<sheet> _jsondata = await list.map<sheet>((json) => sheet.fromJson(json)).toList();
-    dataexcel = _dataexcel(_jsondata);
+    dataexcel = _dataexcel(_jsondata,exchangeRates);
     return _jsondata;
   }
 
@@ -66,7 +105,7 @@ class _TableAssetState extends State<TableAsset> {
         backgroundColor: const Color(0xff4B5526),
         title: const Text('Asset Table Len'),
         actions: [
-          IconButton(onPressed: (){Navigator.pop(context);}, icon: Icon(Icons.close))
+          IconButton(onPressed: (){Navigator.pop(context);}, icon: const Icon(Icons.close))
         ],
       ),
       drawer: Drawer(
@@ -88,7 +127,7 @@ class _TableAssetState extends State<TableAsset> {
               title: const Text('Buat Bar Chart'),
               onTap: () async {
                 for(var data in _dataGridController.selectedRows){
-                  var Id=data.getCells()[0].value as int;
+                  var Id=data.getCells()[0].value.toString();
                   var nama_aset=data.getCells()[1].value.toString();
                   var jenis_aset=data.getCells()[2].value.toString();
                   var kondisi=data.getCells()[3].value.toString();
@@ -98,8 +137,8 @@ class _TableAssetState extends State<TableAsset> {
                   var umur_teknis=data.getCells()[7].value as int;
                   var sumber_dana=data.getCells()[8].value.toString();
                   var nilai_perolehan=data.getCells()[9].value as int;
-                  var nilai_buku=data.getCells()[10].value as int;
-                  var rencana_optimisasi=data.getCells()[11].value.toString();
+                  var nilai_buku=data.getCells()[11].value as int;
+                  var rencana_optimisasi=data.getCells()[12].value.toString();
                   var Sheet_values=sheet_chart(Id, nama_aset, jenis_aset, kondisi, status_pemakaian, utilisasi, tahun_perolehan, umur_teknis, sumber_dana, nilai_perolehan, nilai_buku, rencana_optimisasi);
                   cellValues.add(Sheet_values);
                 }
@@ -115,7 +154,7 @@ class _TableAssetState extends State<TableAsset> {
               title: const Text('Buat Pie Chart'),
               onTap: () async {
                 for(var data in _dataGridController.selectedRows){
-                  var Id=data.getCells()[0].value as int;
+                  var Id=data.getCells()[0].value.toString();
                   var nama_aset=data.getCells()[1].value.toString();
                   var jenis_aset=data.getCells()[2].value.toString();
                   var kondisi=data.getCells()[3].value.toString();
@@ -125,8 +164,8 @@ class _TableAssetState extends State<TableAsset> {
                   var umur_teknis=data.getCells()[7].value as int;
                   var sumber_dana=data.getCells()[8].value.toString();
                   var nilai_perolehan=data.getCells()[9].value as int;
-                  var nilai_buku=data.getCells()[10].value as int;
-                  var rencana_optimisasi=data.getCells()[11].value.toString();
+                  var nilai_buku=data.getCells()[11].value as int;
+                  var rencana_optimisasi=data.getCells()[12].value.toString();
                   var Sheet_values=sheet_chart(Id, nama_aset, jenis_aset, kondisi, status_pemakaian, utilisasi, tahun_perolehan, umur_teknis, sumber_dana, nilai_perolehan, nilai_buku, rencana_optimisasi);
                   cellValues.add(Sheet_values);
                 }
@@ -135,6 +174,15 @@ class _TableAssetState extends State<TableAsset> {
                 if(cleardata==true){
                   cellValues.clear();
                 }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.monetization_on),
+              title: const Text('Nilai Kurs'),
+              onTap: (){
+                Navigator.pop(context);
+                _shownilaikurs(context);
+
               },
             ),
           ],
@@ -146,7 +194,7 @@ class _TableAssetState extends State<TableAsset> {
           return data.hasData ?SfDataGrid(
             tableSummaryRows: [
               GridTableSummaryRow(
-                  color:Color(0xff4B5526),
+                  color:const Color(0xff4B5526),
                   showSummaryInRow: false,
                   columns:[
                     const GridSummaryColumn(
@@ -164,7 +212,7 @@ class _TableAssetState extends State<TableAsset> {
                   ],
                   position: GridTableSummaryRowPosition.bottom),
               GridTableSummaryRow(
-                  color:Color(0xff4B5526) ,
+                  color:const Color(0xff4B5526) ,
                   showSummaryInRow: false,
                   columns: [
                     const GridSummaryColumn(
@@ -237,6 +285,171 @@ class _TableAssetState extends State<TableAsset> {
       },
     );
   }
+
+  void _shownilaikurs(BuildContext context) async {
+    final TextEditingController _searchController = TextEditingController();
+    List<MapEntry<int, double>> filteredRates = [];
+
+    // Change this line to fetch ExchangeRate objects
+    final kursList = await _databaseHelper.getExchangeRates();
+
+    // Map ExchangeRate objects to MapEntry<int, double>
+    final kursMapEntries = kursList
+        .map((exchangeRate) =>
+        MapEntry(exchangeRate.year, exchangeRate.rate.toDouble()))
+        .toList();
+
+    // Sort kursMapEntries by the key (tahun)
+    kursMapEntries.sort((a, b) => a.key.compareTo(b.key));
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            filteredRates.clear();
+            final query = _searchController.text.toLowerCase();
+            if (query.isNotEmpty) {
+              filteredRates.addAll(kursMapEntries.where((entry) =>
+                  entry.key.toString().toLowerCase().contains(query)));
+            } else {
+              filteredRates.addAll(kursMapEntries);
+            }
+
+            return AlertDialog(
+              title: const Text('Nilai Kurs'),
+              insetPadding: const EdgeInsets.all(11),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Cari tahun kurs...',
+                      ),
+                      onChanged: (value) {
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    if (filteredRates.isNotEmpty)
+                      Column(
+                        children: filteredRates.map((entry) {
+                          final kurs = entry.value;
+                          final kursFormatted =
+                          CurrencyFormat.convertToIdr(kurs, 2);
+                          return ListTile(
+                            title: Text('Tahun ${entry.key}'),
+                            subtitle: Text(' $kursFormatted',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                )),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () async {
+                                await _databaseHelper
+                                    .deleteExchangeRate(entry.key);
+                                setState(() {
+                                  kursMapEntries.remove(entry);
+                                  filteredRates.remove(entry);
+                                });
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      )
+                    else
+                      const Text('Tidak ada hasil yang ditemukan.'),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Tutup'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showAddKursDialog(context);
+                  },
+                  child: const Text("Tambah Kurs"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showAddKursDialog(BuildContext context) async {
+    final TextEditingController _yearController = TextEditingController();
+    final TextEditingController _rateController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Tambah Kurs'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _yearController,
+                decoration: const InputDecoration(
+                  hintText: 'Tahun',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: _rateController,
+                decoration: const InputDecoration(
+                  hintText: 'Nilai Kurs',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              onPressed: () async {
+                final String year = _yearController.text;
+                final String rate = _rateController.text;
+                if (year.isNotEmpty && rate.isNotEmpty) {
+                  final int yearInt = int.tryParse(year) ?? 0;
+                  final double rateDouble = double.tryParse(rate) ?? 0.0;
+                  final exchangeRate = ExchangeRate(yearInt, rateDouble);
+
+                  final databaseHelper = DatabaseHelper();
+                  await databaseHelper.insertExchangeRate(exchangeRate);
+
+                  // Refresh tampilan atau lakukan yang sesuai.
+                  setState(() {});
+
+                  _yearController.clear();
+                  _rateController.clear();
+                }
+                Navigator.pop(context);
+              },
+              child: const Text('Tambah'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Batal'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _updateVisibleColumns() {
     List<GridColumn> newColumns = [];
     for (int i = 0; i < _columnNames.length; i++) {
@@ -372,8 +585,18 @@ class _TableAssetState extends State<TableAsset> {
         ),
       ),
       GridColumn(
-        columnName: 'Nilai Buku',
+        columnName: 'Nilai Perolehan Dolar',
         visible: !_hiddenColumns[9],
+        width: 220,
+        label: Container(
+          padding: const EdgeInsets.all(8),
+          alignment: Alignment.center,
+          child: const Text('Kurs Dolar'),
+        ),
+      ),
+      GridColumn(
+        columnName: 'Nilai Buku',
+        visible: !_hiddenColumns[10],
         width: 220,
         label: Container(
           padding: const EdgeInsets.all(8),
@@ -383,7 +606,7 @@ class _TableAssetState extends State<TableAsset> {
       ),
       GridColumn(
         columnName: 'Rencana Optimisasi',
-        visible: !_hiddenColumns[10],
+        visible: !_hiddenColumns[12],
         width: 220,
         label: Container(
           padding: const EdgeInsets.all(8),
@@ -393,7 +616,7 @@ class _TableAssetState extends State<TableAsset> {
       ),
       GridColumn(
         columnName: 'Lokasi',
-        visible: !_hiddenColumns[11],
+        visible: !_hiddenColumns[12],
         width: 220,
         label: Container(
           padding: const EdgeInsets.all(8),
@@ -403,7 +626,7 @@ class _TableAssetState extends State<TableAsset> {
       ),
       GridColumn(
         columnName: 'Gambar',
-        visible: !_hiddenColumns[12],
+        visible: !_hiddenColumns[13],
         width: 220,
         label: Container(
           padding:const EdgeInsets.all(8),
@@ -417,18 +640,28 @@ class _TableAssetState extends State<TableAsset> {
 }
 
 class _dataexcel extends DataGridSource {
-  _dataexcel(this.data) {
+
+  final Map<int, double> exchangeRates;
+
+  _dataexcel(this.data, this.exchangeRates) {
     buildDataGridRow();
   }
   List<sheet> data = [];
   List<DataGridRow> dataGridRows = [];
 
   void buildDataGridRow() {
+    int jumlahdata=1;
     dataGridRows = data.map<DataGridRow>((dataGridRow) {
+
+      NumberFormat.currency(
+        locale: 'en_US',
+        symbol: '\$',
+      );
+
       return DataGridRow(cells: [
-        DataGridCell<int>(columnName: 'No', value: dataGridRow.Id),
-        DataGridCell<String>(columnName: 'Nama Aset', value: dataGridRow.nama_aset),
-        DataGridCell<String>(columnName: 'Jenis Aset', value: dataGridRow.jenis_aset),
+        DataGridCell<int>(columnName: 'No', value: jumlahdata++),
+        DataGridCell<String>(columnName: 'Nama Aset', value: dataGridRow.nama_asset),
+        DataGridCell<String?>(columnName: 'Jenis Aset', value: dataGridRow.jenis_asset),
         DataGridCell<String>(columnName: 'Kondisi', value: dataGridRow.kondisi),
         DataGridCell<String>(columnName: 'Status Pemakaian', value: dataGridRow.status_pemakaian),
         DataGridCell<int>(columnName: 'Utilisasi', value: dataGridRow.utilisasi),
@@ -436,6 +669,7 @@ class _dataexcel extends DataGridSource {
         DataGridCell<int>(columnName: 'Umur Teknis', value: dataGridRow.umur_teknis),
         DataGridCell<String>(columnName: 'Sumber Dana', value: dataGridRow.sumber_dana),
         DataGridCell<int>(columnName: 'Nilai Perolehan', value: dataGridRow.nilai_perolehan),
+        DataGridCell<int>(columnName: 'Nilai Perolehan Dolar', value: dataGridRow.nilai_perolehan_dollar),
         DataGridCell<int>(columnName: 'Nilai Buku', value: dataGridRow.nilai_buku),
         DataGridCell<String>(columnName: 'Rencana Optimisasi', value: dataGridRow.rencana_optimisasi),
         DataGridCell<String>(columnName: 'Lokasi', value: dataGridRow.lokasi),
@@ -466,7 +700,7 @@ class _dataexcel extends DataGridSource {
       ),
       Container(alignment: Alignment.center,
         padding: const EdgeInsets.all(8.0),
-        child: Text(row.getCells()[2].value,
+        child: Text(row.getCells()[2].value.toString(),
           overflow: TextOverflow.ellipsis,
         ),
       ),
@@ -522,14 +756,14 @@ class _dataexcel extends DataGridSource {
       Container(
         alignment: Alignment.center,
         padding: const EdgeInsets.all(8.0),
-        child: Text(CurrencyFormat.convertToIdr(row.getCells()[10].value, 2),
+        child: Text(row.getCells()[10].value.toString(),
           overflow: TextOverflow.ellipsis,
         ),
       ),
       Container(
         alignment: Alignment.center,
         padding: const EdgeInsets.all(8.0),
-        child: Text(row.getCells()[11].value.toString(),
+        child: Text(CurrencyFormat.convertToIdr(row.getCells()[11].value, 2),
           overflow: TextOverflow.ellipsis,
         ),
       ),
@@ -541,9 +775,16 @@ class _dataexcel extends DataGridSource {
         ),
       ),
       Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(8.0),
+        child: Text(row.getCells()[13].value.toString(),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+      Container(
           alignment: Alignment.center,
           padding: const EdgeInsets.all(8.0),
-          child: Image.network(row.getCells()[13].value.toString())
+          child: Image.network(row.getCells()[14].value.toString())
       ),
     ]);
   }
@@ -565,19 +806,19 @@ class _dataexcel extends DataGridSource {
     else if(summaryColumn?.summaryType==GridSummaryType.sum && summaryColumn?.columnName != 'No'){
       final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ');
       return Container(
-        padding: EdgeInsets.all(5.0),
+        padding: const EdgeInsets.all(5.0),
         alignment: Alignment.center,
         child:
         Text('Total: '+
           formatter.format(double.parse(summaryValue)),
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        )
       );
     }
     else if(summaryColumn?.summaryType==GridSummaryType.average && summaryColumn?.columnName != 'No'){
       final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ');
       return Container(
-        padding: EdgeInsets.all(5.0),
+        padding: const EdgeInsets.all(5.0),
         alignment: Alignment.center,
         child:
         Text('Rata-Rata: '+

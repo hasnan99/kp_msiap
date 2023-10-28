@@ -41,7 +41,7 @@ class _DetailAset extends State<DetailAset> {
   @override
   Widget build(BuildContext context) {
     sheet? foundAsset = dataList.firstWhereOrNull((asset) =>
-    asset.Id.toString() == widget.data.Id.toString(),
+    asset.id.toString() == widget.data.id.toString(),
     );
     final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ');
     return Scaffold(
@@ -57,7 +57,7 @@ class _DetailAset extends State<DetailAset> {
             Container(
               height: 250,
               alignment: Alignment.center,
-              child: Image.network(foundAsset!.gambar, height: 250),
+              child: Image.network(foundAsset!.gambar?[0]??"", height: 250),
             ),
             if(foundAsset != null)
             Expanded(
@@ -67,18 +67,18 @@ class _DetailAset extends State<DetailAset> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildDetailItem("Nama Aset", foundAsset.nama_aset),
-                      _buildDetailItem("Jenis Aset", foundAsset.jenis_aset),
-                      _buildDetailItem("Kondisi", foundAsset.kondisi),
-                      _buildDetailItem("Status Pemakaian", foundAsset.status_pemakaian),
+                      _buildDetailItem("Nama Aset", foundAsset.nama_asset),
+                      _buildDetailItem("Jenis Aset", foundAsset.jenis_asset??""),
+                      _buildDetailItem("Kondisi", foundAsset.kondisi??""),
+                      _buildDetailItem("Status Pemakaian", foundAsset.status_pemakaian??""),
                       _buildDetailItem("Utilisasi", foundAsset.utilisasi.toString()),
                       _buildDetailItem("Tahun Perolehan", foundAsset.tahun_perolehan.toString()),
                       _buildDetailItem("Umur Teknis", foundAsset.umur_teknis.toString()),
-                      _buildDetailItem("Sumber Dana", foundAsset.sumber_dana),
+                      _buildDetailItem("Sumber Dana", foundAsset.sumber_dana??""),
                       _buildDetailItem("Nilai Perolehan", formatter.format(double.parse(foundAsset.nilai_perolehan.toString()??'0'))),
                       _buildDetailItem("Nilai Buku", formatter.format(double.parse(foundAsset.nilai_buku.toString()??'0'))),
-                      _buildDetailItem("Rencana Optimisasi", foundAsset.rencana_optimisasi),
-                      _buildDetailItem("Lokasi", foundAsset.lokasi),
+                      _buildDetailItem("Rencana Optimisasi", foundAsset.rencana_optimisasi??""),
+                      _buildDetailItem("Lokasi", foundAsset.lokasi??""),
                     ],
                   ),
                 ),

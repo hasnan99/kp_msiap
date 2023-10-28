@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../model/sheet_chart.dart';
 
@@ -47,6 +48,21 @@ class _pieChartPAL extends State<pieChartPAL> {
   void initState() {
     super.initState();
     updateGroupedData();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
+  }
+
+  @override
+  dispose(){
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    super.dispose();
   }
 
   @override
@@ -86,7 +102,7 @@ class _pieChartPAL extends State<pieChartPAL> {
                   }).toList(),
                 ),
                 SizedBox(width: 30),
-                Text("Jumlah Data Asset : "+widget.data_chart.length.toString()),
+                Text("Jumlah Data Asset Terpilih : "+widget.data_chart.length.toString()),
               ],
             ),
           ),

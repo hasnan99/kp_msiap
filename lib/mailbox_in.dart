@@ -1,10 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_cached_pdfview/flutter_cached_pdfview.dart';
 import 'package:kp_msiap/model/mailbox.dart';
-import 'package:kp_msiap/model/news.dart';
 import 'package:kp_msiap/api/sheet_api.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 class Mailbox_in extends StatefulWidget {
@@ -19,9 +17,24 @@ class _Mailbox_in extends State<Mailbox_in> {
   late Future<List<mailbox>> dataFuture;
   final _auth = FirebaseAuth.instance;
   late User? user;
+  int jumlah_mailbox=0;
 
   Future<List<mailbox>> _fetchmailbox_in() async {
     List<mailbox> newData = await sheet_api.getmailbox_in();
+    try{
+    for (var item in newData) {
+      String fileId = extractFileId(item.url??"");
+      String directDownloadUrl = convertToDirectDownloadUrl(fileId);
+      item.url = directDownloadUrl;
+    }
+    setState(() {
+      jumlah_mailbox=newData.length;
+    });
+    return newData;
+    }
+    catch(e){
+      print(e.toString());
+    }
     return newData;
   }
 
@@ -36,6 +49,12 @@ class _Mailbox_in extends State<Mailbox_in> {
 
   String convertToDirectDownloadUrl(String fileId) {
     return "https://drive.google.com/uc?export=view&id=$fileId";
+  }
+
+  String formatDateHour(String dateTimeString) {
+    DateTime dateTime = DateTime.parse(dateTimeString);
+    String formattedDateTime = DateFormat('dd-MM-yyyy HH:mm:ss').format(dateTime);
+    return formattedDateTime;
   }
 
   String formatDate(String dateTimeString) {
@@ -57,62 +76,98 @@ class _Mailbox_in extends State<Mailbox_in> {
 
   @override
   Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context,jumlah_mailbox);
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+            backgroundColor: const Color(0xff4B5526),
+            title: const Text("Mailbox in"),
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.pop(context,jumlah_mailbox);
+              },
+            )
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: FutureBuilder<List<mailbox>>(
+                future:dataFuture,
+                builder: (context,snapshot){
+                  if(snapshot.hasData){
+                    return ListView.builder(
+                        itemCount: snapshot.data!.length,
+                        itemBuilder:(context,index){
+                          return Card(
+                            elevation: 6,
+                            margin: EdgeInsets.all(10),
+                            child:ListTile(
+                              title: Text("${snapshot.data![index].nama_file}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              subtitle: Text("Upload mailbox: ${formatDateHour(snapshot.data![index].date_edit??"2000-30-30")} \n"
+                                  "Actual mail date: ${formatDate(snapshot.data![index].date_edit??"2000-30-30")}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              onTap: (){
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => PDFScreen(pdfUrl: snapshot.data![index].url??"")));
+                                setState(() {
+                                  jumlah_mailbox=0;
+                                });
+                              },
+                            ),
+                          );
+                        }
+                    );
+                  }else if(snapshot.hasError){
+                    return Center(
+                      child: Text("${snapshot.error}"),
+                    );
+                  }
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                },
+              ),
+            ),
+          ],
+      )
+    ),
+    );
+  }
+}
+
+class PDFScreen extends StatelessWidget {
+  final String pdfUrl;
+
+  PDFScreen({required this.pdfUrl});
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          backgroundColor: const Color(0xff4B5526),
-          title: const Text("Mailbox in"),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          )
+        title: Text('Mailbox in'),
+        backgroundColor: const Color(0xff4B5526),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: FutureBuilder<List<mailbox>>(
-              future:dataFuture,
-              builder: (context,snapshot){
-                if(snapshot.hasData){
-                  return ListView.builder(
-                      itemCount: snapshot.data!.length,
-                      itemBuilder:(context,index){
-                        return Card(
-                          elevation: 6,
-                          margin: EdgeInsets.all(10),
-                          child:ListTile(
-                            title: Text("${snapshot.data![index].dokumen}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                            subtitle: Text("Upload mailbox: 30-08-2023 \n"
-                                "Actual mail date: 30-08-2023",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                            onTap: (){},
-                          ),
-                        );
-                      }
-                  );
-                }else if(snapshot.hasError){
-                  return Center(
-                    child: Text("${snapshot.error}"),
-                  );
-                }
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              },
-            ),
-          ),
-        ],
+      body:  PDF().cachedFromUrl(
+        pdfUrl,
+        placeholder: (progress) => Center(child: Text('$progress %')),
+        errorWidget: (error) => Center(child: Text(error.toString())),
       ),
+
     );
   }
 }

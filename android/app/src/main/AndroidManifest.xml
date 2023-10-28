@@ -29,8 +29,9 @@
     </queries>
 
     <application
-        android:label="mSiaps"
+        android:label="m-SIAP"
         android:name="${applicationName}"
+        android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

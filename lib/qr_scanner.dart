@@ -222,7 +222,7 @@ class _ScanQR extends State<ScanQR> {
             String? hasil = result?.code;
             isLoading = true;
             sheet? foundAsset = dataList.firstWhereOrNull(
-                  (asset) => asset.Id.toString() == hasil,
+                  (asset) => asset.id.toString() == hasil,
             );
             if (foundAsset != null) {
               setState(() {

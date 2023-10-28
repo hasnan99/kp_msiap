@@ -40,7 +40,6 @@ class _link_News extends State<link_News> {
       body: ListView.builder(
         itemCount: widget.data.length,
         itemBuilder: (context, index) {
-          // Gantilah cari_data[index] dengan data[index] sesuai kebutuhan Anda.
           final item = widget.data[index];
           final googleDriveLink = item['Link File'];
           final fileId = extractFileId(googleDriveLink);

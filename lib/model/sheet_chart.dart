@@ -1,16 +1,16 @@
 class sheet_chart{
-  int Id;
-  String nama_aset;
-  String jenis_aset;
-  String kondisi;
-  String status_pemakaian;
-  int utilisasi;
-  int tahun_perolehan;
-  int umur_teknis;
-  String sumber_dana;
-  int nilai_perolehan;
-  int nilai_buku;
-  String rencana_optimisasi;
+  String? Id;
+  String? nama_aset;
+  String? jenis_aset;
+  String? kondisi;
+  String? status_pemakaian;
+  int? utilisasi;
+  int? tahun_perolehan;
+  int? umur_teknis;
+  String? sumber_dana;
+  int? nilai_perolehan;
+  int? nilai_buku;
+  String? rencana_optimisasi;
 
   sheet_chart(
       this.Id,
@@ -28,18 +28,18 @@ class sheet_chart{
 
   factory sheet_chart.fromJson(Map<String,dynamic>json){
     return sheet_chart(
-      json['Id'] as int,
-      json['nama_asset'] as String,
-      json['jenis_asset'] as String,
-      json['kondisi'] as String,
-      json['status_pemakaian'] as String,
-      json['utilisasi'] as int,
-      json['tahun_perolehan'] as int,
-      json['umur_teknis'] as int,
-      json['sumber_dana'] as String,
-      json['nilai_perolehan'] as int,
-      json['nilai_buku'] as int,
-      json['rencana_optimisasi'] as String,
+      json['id'] as String,
+      json['nama_asset'] as String?,
+      json['jenis_asset'] as String?,
+      json['kondisi'] as String?,
+      json['status_pemakaian'] as String?,
+      json['utilisasi'] as int?,
+      int.tryParse(json['tahun_perolehan'].toString()) ?? 0,
+      json['umur_teknis'] as int?,
+      json['sumber_dana'] as String?,
+      json['nilai_perolehan'] as int?,
+      json['nilai_buku'] as int?,
+      json['rencana_optimisasi'] as String?,
     );
   }
   Map<String,dynamic> toJson()=>{
@@ -66,30 +66,30 @@ class sheet_chart{
     return data.where((item) => item.getProperty(property) == value).length;
   }
 
-  Object getProperty(String attribute) {
+  Object? getProperty(String attribute) {
     switch (attribute) {
       case 'nama_aset':
-        return nama_aset;
+        return nama_aset ?? "";
       case 'jenis_aset':
-        return jenis_aset;
+        return jenis_aset ?? "";
       case 'kondisi':
-        return kondisi;
+        return kondisi ?? "";
       case 'status_pemakaian':
-        return status_pemakaian;
+        return status_pemakaian ?? "";
       case 'utilisasi':
-        return utilisasi;
+        return utilisasi??0;
       case 'tahun_perolehan':
-        return tahun_perolehan;
+        return tahun_perolehan??0;
       case 'umur_teknis':
-        return umur_teknis;
+        return umur_teknis??0;
       case 'sumber_dana':
-        return sumber_dana;
+        return sumber_dana ?? "";
       case 'nilai_perolehan':
-        return nilai_perolehan;
+        return nilai_perolehan??0;
       case 'nilai_buku':
-        return nilai_buku;
+        return nilai_buku??0;
       case 'rencana_optimisasi':
-        return rencana_optimisasi;
+        return rencana_optimisasi??"";
 
       default:
         return '';

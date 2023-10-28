@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:kp_msiap/model/news.dart';
 import 'package:kp_msiap/api/sheet_api.dart';
 import 'package:http/http.dart' as http;
@@ -23,14 +22,20 @@ class _News extends State<News> {
 
   Future<List<news>> _fetchnews() async {
     List<news> newData = await sheet_api.getnews();
-    for (var item in newData) {
-      String fileId = extractFileId(item.link_file);
-      String directDownloadUrl = convertToDirectDownloadUrl(fileId);
-      item.link_file = directDownloadUrl;
+    try {
+      for (var item in newData) {
+        String fileId = extractFileId(item.link_file??"");
+        String directDownloadUrl = convertToDirectDownloadUrl(fileId);
+        item.link_file = directDownloadUrl;
+      }
+      setState(() {
+        jumlah_news = newData.length;
+      });
+      return newData;
     }
-    setState(() {
-      jumlah_news=newData.length;
-    });
+    catch(e){
+      print(e.toString());
+    }
     return newData;
   }
 
@@ -49,7 +54,7 @@ class _News extends State<News> {
 
   String formatDate(String dateTimeString) {
     DateTime dateTime = DateTime.parse(dateTimeString);
-    String formattedDateTime = DateFormat('dd-MM-yyyy').format(dateTime);
+    String formattedDateTime = DateFormat('dd-MM-yyyy  HH:mm:ss').format(dateTime);
     return formattedDateTime;
   }
 
@@ -66,65 +71,75 @@ class _News extends State<News> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xff4B5526),
-        title: const Text("News"),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          )
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: FutureBuilder<List<news>>(
-              future:dataFuture,
-              builder: (context,snapshot){
-                if(snapshot.hasData){
-                  return ListView.builder(
-                      itemCount: snapshot.data!.length,
-                      itemBuilder:(context,index){
-                        return Card(
-                          elevation: 6,
-                          margin: EdgeInsets.all(10),
-                          child:ListTile(
-                          title: Text(snapshot.data![index].nama_file,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                          ),
-                          ),
-                          subtitle: Text("Upload News: ${formatDate(snapshot.data![index].timestamp)}",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          onTap: (){
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                builder: (context) => PDFScreen(pdfUrl: snapshot.data![index].link_file)));
-                            },
-                          ),
-                        );
-                      }
-                    );
-                }else if(snapshot.hasError){
-                  return Center(
-                    child: Text("${snapshot.error}"),
-                  );
-                }
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context,jumlah_news);
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xff4B5526),
+          title: const Text("News"),
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.pop(context,jumlah_news);
               },
+            )
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: FutureBuilder<List<news>>(
+                future:dataFuture,
+                builder: (context,snapshot){
+                  if(snapshot.hasData){
+                    return ListView.builder(
+                        itemCount: snapshot.data!.length,
+                        itemBuilder:(context,index){
+                          return Card(
+                            elevation: 6,
+                            margin: EdgeInsets.all(10),
+                            child:ListTile(
+                            title: Text(snapshot.data![index].nama_file??"",
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                            ),
+                            ),
+                            subtitle: Text("Upload News: ${formatDate(snapshot.data![index].date_edit??"2000-30-30")}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            onTap: (){
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                  builder: (context) => PDFScreen(pdfUrl: snapshot.data![index].url??"")
+                                  ));
+                              setState(() {
+                                jumlah_news=0;
+                              });
+                              },
+                            ),
+                          );
+                        }
+                      );
+                  }else if(snapshot.hasError){
+                    return Center(
+                      child: Text("${snapshot.error}"),
+                    );
+                  }
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -107,7 +107,7 @@ class _ChartPieDahana extends State<ChartPieDahana> {
                   }).toList(),
                 ),
                 SizedBox(width: 30),
-                Text("Jumlah Data : $total"),
+                Text("Jumlah Total Asset : $total"),
               ],
             ),
           ),

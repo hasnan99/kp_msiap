@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kp_msiap/api/sheet_api.dart';
-import 'package:kp_msiap/model/sheet.dart';
 import 'package:kp_msiap/model/sheet_add.dart';
 import 'package:kp_msiap/widget/background.dart';
 import 'package:http/http.dart' as http;
@@ -28,6 +27,7 @@ class _AddData_qr extends State<AddData_qr> {
   final _auth = FirebaseAuth.instance;
   late User? user;
   bool isImageAdded = false;
+  bool linkdrive=false;
 
   void getuseremail() async {
     user = _auth.currentUser; // Mengambil data user setelah berhasil login
@@ -52,8 +52,6 @@ class _AddData_qr extends State<AddData_qr> {
     lokasicontrol.text = widget.data[0].lokasi;
   }
 
-  CollectionReference _collectionReference=FirebaseFirestore.instance.collection('gambar');
-
   GlobalKey<FormState> key = GlobalKey();
 
   String imageUrl = '';
@@ -73,16 +71,41 @@ class _AddData_qr extends State<AddData_qr> {
   TextEditingController nilai_bukucontrol = TextEditingController();
   TextEditingController rencana_optimisasicontrol = TextEditingController();
   TextEditingController lokasicontrol = TextEditingController();
+  TextEditingController merkcontrol = TextEditingController();
+  TextEditingController tipe_mesincontrol = TextEditingController();
+  TextEditingController customRawMaterialController = TextEditingController();
+  TextEditingController customkategori_mesin = TextEditingController();
+  TextEditingController data_sheetcontrol = TextEditingController();
+  TextEditingController kartu_mesincontrol = TextEditingController();
+  TextEditingController kartu_elektronikcontrol = TextEditingController();
+
+  List<DropdownMenuItem<String>> get kategori_mesin_item{
+    List<DropdownMenuItem<String>> kategori_fungsi_mesin = [
+      DropdownMenuItem(child: Text("-Kosong-"),value: "kosong"),
+      DropdownMenuItem(child: Text("Bubut"),value: "bubut"),
+      DropdownMenuItem(child: Text("Cutting"),value: "cutting"),
+      DropdownMenuItem(child: Text("Ketik"), value: customkategori_mesin.text),
+    ];
+    return kategori_fungsi_mesin;
+  }
+
+  List<DropdownMenuItem<String>> get raw_material{
+    List<DropdownMenuItem<String>> raw_material = [
+      DropdownMenuItem(child: Text("Kosong"),value: "Kosong"),
+      DropdownMenuItem(child: Text("Bubut"),value: "bubut"),
+      DropdownMenuItem(child: Text("Cutting"),value: "cutting"),
+      DropdownMenuItem(child: Text("Ketik"), value: customRawMaterialController.text),
+    ];
+    return raw_material;
+  }
+
+  String selected_kategori_mesin="kosong";
+  String selected_raw_material="Kosong";
 
   void _submitForm() async {
-    if(_formKey.currentState!.validate()){
-      Map<String,String>datasend={
-        'image':imageUrl,
-      };
-      _collectionReference.add(datasend);
-    }
-    String url = imageUrl;
-    String nama_table="len_assets";
+    if (_formKey.currentState!.validate()) {
+    String nama_table="len";
+    String id="id test";
     String nama_aset = nama_asetcontrol.text;
     String jenis_aset = jenis_asetcontrol.text;
     String kondisi = kondisicontrol.text;
@@ -96,29 +119,41 @@ class _AddData_qr extends State<AddData_qr> {
     String rencana_optimisasi = rencana_optimisasicontrol.text;
     String lokasi = lokasicontrol.text;
     String user_edit=user!.email.toString();
+    String merk=merkcontrol.text;
+    String tipe_mesin=tipe_mesincontrol.text;
+    List<String> kategori_fungsi_mesin=selected_kategori_mesin as List<String> ;
+    List<String> raw_material=selected_raw_material as List<String> ;
+    String data_sheet=data_sheetcontrol.text;
+    String kartu_mesin=kartu_mesincontrol.text;
+    String kartu_elektronik=kartu_elektronikcontrol.text;
 
-    http.Response response=await sheet_api.tambahdata(nama_table, nama_aset, jenis_aset, kondisi, status_pemakaian, utilitas,
-        tahun_perolehan, umur_teknis, sumber_dana, nilai_perolehan, nilai_buku, rencana_optimisasi, lokasi,url,user_edit);
-    if(response.body=="success"){
-      notifikasi();
-      showSnackbar("Berhasil Menambahkan Asset");
-      _formKey.currentState!.reset();
-      imageUrl = '';
-      nama_asetcontrol.clear();
-      jenis_asetcontrol.clear();
-      kondisicontrol.clear();
-      status_pemakaiancontrol.clear();
-      utilisasicontrol.clear();
-      tahun_perolehancontrol.clear();
-      umur_tekniscontrol.clear();
-      sumber_danacontrol.clear();
-      nilai_perolehancontrol.clear();
-      nilai_bukucontrol.clear();
-      rencana_optimisasicontrol.clear();
-      lokasicontrol.clear();
-    }else{
-      showSnackbarfail("Gagal Menambahkan Asset");
-    }
+    http.Response response=await sheet_api.tambahdata(nama_table, id,nama_aset, jenis_aset, kondisi, status_pemakaian, utilitas,
+        tahun_perolehan, umur_teknis, sumber_dana, nilai_perolehan, nilai_buku, rencana_optimisasi,
+        lokasi,user_edit,merk,tipe_mesin,kategori_fungsi_mesin,raw_material,data_sheet,kartu_mesin,kartu_elektronik,linkdrive);
+    if(response.statusCode==200){
+      final responsedata=json.decode(response.body);
+      if(responsedata.containsKey('inserted_id')){
+        notifikasi();
+        showSnackbar("Berhasil Menambahkan Asset");
+        _formKey.currentState!.reset();
+        imageUrl = '';
+        nama_asetcontrol.clear();
+        jenis_asetcontrol.clear();
+        kondisicontrol.clear();
+        status_pemakaiancontrol.clear();
+        utilisasicontrol.clear();
+        tahun_perolehancontrol.clear();
+        umur_tekniscontrol.clear();
+        sumber_danacontrol.clear();
+        nilai_perolehancontrol.clear();
+        nilai_bukucontrol.clear();
+        rencana_optimisasicontrol.clear();
+        lokasicontrol.clear();
+      }else{
+        showSnackbarfail("Gagal Menambahkan Asset");
+      }
+      }
+  }
   }
 
   void showSnackbar(String message) {
@@ -554,6 +589,156 @@ class _AddData_qr extends State<AddData_qr> {
                                         border: InputBorder.none,
                                         fillColor: Color(0xffD6D6D6),
                                         filled: true)),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children:  <Widget>[
+                                const Text(
+                                  "Merk",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                TextFormField(
+                                    controller: merkcontrol,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return merkcontrol.text="Na";
+                                      }
+                                      return null;
+                                    },
+                                    decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        fillColor: Color(0xffD6D6D6),
+                                        filled: true)),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children:  <Widget>[
+                                const Text(
+                                  "Tipe Mesin",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                TextFormField(
+                                    controller: tipe_mesincontrol,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return tipe_mesincontrol.text="Na";
+                                      }
+                                      return null;
+                                    },
+                                    decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        fillColor: Color(0xffD6D6D6),
+                                        filled: true)),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children:  <Widget>[
+                                const Text(
+                                  "Kategori Fungsi Mesin",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                DropdownButtonFormField(
+                                  decoration: InputDecoration(
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.grey, width: 2),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  items: kategori_mesin_item,
+                                  value: selected_kategori_mesin,
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      selected_kategori_mesin = newValue!;
+                                    });
+                                  },
+                                ),
+                                if (selected_kategori_mesin == customkategori_mesin.text)
+                                  TextFormField(
+                                    controller: customkategori_mesin,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selected_kategori_mesin = value;
+                                      });
+                                    },
+                                    decoration: InputDecoration(
+                                      hintText: "Masukkan Kategori Mesin",
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: Colors.grey, width: 2),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children:  <Widget>[
+                                const Text(
+                                  "Raw Material",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                DropdownButtonFormField(
+                                  decoration: InputDecoration(
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.grey, width: 2),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  items: raw_material,
+                                  value: selected_raw_material,
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      selected_raw_material = newValue!;
+                                    });
+                                  },
+                                ),
+                                if (selected_raw_material == customRawMaterialController.text)
+                                  TextFormField(
+                                    controller: customRawMaterialController,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selected_raw_material = value;
+                                      });
+                                    },
+                                    decoration: InputDecoration(
+                                      hintText: "Masukkan raw material",
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: Colors.grey, width: 2),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                           ),

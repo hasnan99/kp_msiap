@@ -3,9 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:kp_msiap/api/sheet_api.dart';
 import 'dart:convert';
-import 'package:kp_msiap/model/sheet.dart';
 import 'package:kp_msiap/model/sheet_chart.dart';
-import 'package:kp_msiap/statistik/char_pie_len.dart';
+import 'package:kp_msiap/statistik/chart_pie_len.dart';
 import 'package:kp_msiap/statistik/chart_pie_dahana.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
@@ -16,17 +15,17 @@ class ChartPageLen extends StatefulWidget {
   _ChartPageLen createState() => _ChartPageLen();
 
   final Map<String, dynamic Function(sheet_chart)> xMappers = {
-    'Nama Aset':(sheet_chart sales) => sales.nama_aset,
-    'Jenis Aset':(sheet_chart sales) => sales.jenis_aset,
-    'kondisi':(sheet_chart sales) => sales.kondisi,
-    'Status Pemakaian':(sheet_chart sales) => sales.status_pemakaian,
-    'Utilisasi':(sheet_chart sales) => sales.utilisasi.toString(),
-    'Tahun Perolehan':(sheet_chart sales) => sales.tahun_perolehan.toString(),
-    'Umur Teknis':(sheet_chart sales) => sales.umur_teknis.toString(),
-    'Sumber Dana':(sheet_chart sales) => sales.sumber_dana,
-    'Nilai Perolehan':(sheet_chart sales)=> sales.nilai_perolehan.toString(),
-    'Nilai Buku':(sheet_chart sales)=> sales.nilai_buku.toString(),
-    'Rencana Optimisasi':(sheet_chart sales) => sales.rencana_optimisasi,
+    'Nama Aset':(sheet_chart sales) => sales.nama_aset?.toString()??"kosong",
+    'Jenis Aset':(sheet_chart sales) => sales.jenis_aset?.toString()??"kosong",
+    'kondisi':(sheet_chart sales) => sales.kondisi?.toString()??"kosong",
+    'Status Pemakaian':(sheet_chart sales) => sales.status_pemakaian?.toString()??"kosong",
+    'Utilisasi':(sheet_chart sales) => sales.utilisasi?.toString()??"kosong",
+    'Tahun Perolehan':(sheet_chart sales) => sales.tahun_perolehan?.toString()??"kosong",
+    'Umur Teknis':(sheet_chart sales) => sales.umur_teknis?.toString()??"kosong",
+    'Sumber Dana':(sheet_chart sales) => sales.sumber_dana?.toString()??"kosong",
+    'Nilai Perolehan':(sheet_chart sales)=> sales.nilai_perolehan?.toString()??"kosong",
+    'Nilai Buku':(sheet_chart sales)=> sales.nilai_buku?.toString()??"kosong",
+    'Rencana Optimisasi':(sheet_chart sales) => sales.rencana_optimisasi?.toString()??"kosong",
   };
 }
 
@@ -62,50 +61,44 @@ class _ChartPageLen extends State<ChartPageLen> {
     });
 
     yMappers = {
-      'Nama Aset':(sheet_chart sales) => sales.nama_aset,
-      'Jenis Aset':(sheet_chart sales) => sales.jenis_aset,
-      'kondisi':(sheet_chart sales) => sales.kondisi,
-      'Status Pemakaian':(sheet_chart sales) => sales.status_pemakaian,
       'Utilisasi':(sheet_chart sales) => sales.utilisasi,
       'Tahun Perolehan':(sheet_chart sales) => sales.tahun_perolehan,
       'Umur Teknis':(sheet_chart sales) => sales.umur_teknis,
-      'Sumber Dana':(sheet_chart sales) => sales.sumber_dana,
       'Nilai Perolehan':(sheet_chart sales)=> sales.nilai_perolehan,
       'Nilai Buku':(sheet_chart sales)=> sales.nilai_buku,
-      'Rencana Optimisasi':(sheet_chart sales) => sales.rencana_optimisasi,
 
       'jumlah nama aset': (sheet_chart sales) {
-        return sales.countData(chartdata, 'nama_aset', sales.nama_aset);
+        return sales.countData(chartdata, 'nama_aset', sales.nama_aset??"");
       },
       'jumlah jenis aset': (sheet_chart sales) {
-        return sales.countData(chartdata, 'jenis_aset', sales.jenis_aset);
+        return sales.countData(chartdata, 'jenis_aset', sales.jenis_aset??"");
       },
       'jumlah Kondisi': (sheet_chart sales) {
-        return sales.countData(chartdata, 'kondisi', sales.kondisi);
+        return sales.countData(chartdata, 'kondisi', sales.kondisi??"");
       },
       'jumlah status pemakaian': (sheet_chart sales) {
-        return sales.countData(chartdata, 'status_pemakaian', sales.status_pemakaian);
+        return sales.countData(chartdata, 'status_pemakaian', sales.status_pemakaian??"");
       },
       'jumlah Utilisasi': (sheet_chart sales) {
-        return sales.countData(chartdata, 'utilisasi', sales.utilisasi);
+        return sales.countData(chartdata, 'utilisasi', sales.utilisasi??0);
       },
       'jumlah Tahun Perolehan': (sheet_chart sales) {
-        return sales.countData(chartdata, 'tahun_perolehan', sales.tahun_perolehan);
+        return sales.countData(chartdata, 'tahun_perolehan', sales.tahun_perolehan??0);
       },
       'jumlah umur teknis': (sheet_chart sales) {
-        return sales.countData(chartdata, 'umur_teknis', sales.umur_teknis);
+        return sales.countData(chartdata, 'umur_teknis', sales.umur_teknis??0);
       },
       'jumlah Sumber dana': (sheet_chart sales) {
-        return sales.countData(chartdata, 'sumber_dana', sales.sumber_dana);
+        return sales.countData(chartdata, 'sumber_dana', sales.sumber_dana??"");
       },
       'jumlah Nilai Perolehan': (sheet_chart sales) {
-        return sales.countData(chartdata, 'nilai_perolehan', sales.nilai_perolehan);
+        return sales.countData(chartdata, 'nilai_perolehan', sales.nilai_perolehan??0);
       },
       'jumlah Nilai Buku': (sheet_chart sales) {
-        return sales.countData(chartdata, 'nilai_buku', sales.nilai_buku);
+        return sales.countData(chartdata, 'nilai_buku', sales.nilai_buku??0);
       },
       'jumlah rencana optimisasi': (sheet_chart sales) {
-        return sales.countData(chartdata, 'rencana_optimisasi', sales.rencana_optimisasi);
+        return sales.countData(chartdata, 'rencana_optimisasi', sales.rencana_optimisasi??"");
       },
     };
     SystemChrome.setPreferredOrientations([
@@ -180,7 +173,7 @@ class _ChartPageLen extends State<ChartPageLen> {
                   }).toList(),
                 ),
                 SizedBox(width: 50),
-                Text("Jumlah Data : $total"),
+                Text("Jumlah Total Asset : $total"),
               ],
             ),
           ),

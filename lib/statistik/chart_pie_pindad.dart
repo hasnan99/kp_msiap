@@ -6,11 +6,11 @@ import 'dart:convert';
 import 'package:kp_msiap/model/sheet_chart.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-class ChartPieLen extends StatefulWidget {
-  ChartPieLen({Key? key}) : super(key: key);
+class ChartPiepindad extends StatefulWidget {
+  ChartPiepindad({Key? key}) : super(key: key);
 
   @override
-  _ChartPieLen createState() => _ChartPieLen();
+  _ChartPiepindad createState() => _ChartPiepindad();
 
   final Map<String, dynamic Function(sheet_chart)> xMappers = {
     'Nama Aset':(sheet_chart sales) => sales.nama_aset,
@@ -27,7 +27,7 @@ class ChartPieLen extends StatefulWidget {
   };
 }
 
-class _ChartPieLen extends State<ChartPieLen> {
+class _ChartPiepindad extends State<ChartPiepindad> {
   late Future<List<sheet_chart>> chartdata;
   int total=0;
   late String selectedXValue = 'Tahun Perolehan';
@@ -48,9 +48,9 @@ class _ChartPieLen extends State<ChartPieLen> {
     }
   }
 
-  Future<List<sheet_chart>> _fetchDataLen() async {
+  Future<List<sheet_chart>> _fetchDatapindad() async {
     try {
-      final response = await http.get(Uri.parse(sheet_api.URL_len));
+      final response = await http.get(Uri.parse(sheet_api.URL_Pindad));
       if (response.statusCode == 200) {
         final List<dynamic> json = jsonDecode(response.body);
         final data = json.map((item) => sheet_chart.fromJson(item)).toList();
@@ -70,21 +70,19 @@ class _ChartPieLen extends State<ChartPieLen> {
   @override
   void initState() {
     super.initState();
-    _fetchDataLen().then((data){
+    _fetchDatapindad().then((data){
       setState(() {
         total=data.length;
       });
     });
   }
 
-
   @override
   Widget build(BuildContext context){
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xff4B5526),
-        title: Text("Chart Pie Len"),
+        title: Text("Chart Pie Pindad"),
       ),
       body: Column(
         children: [
@@ -109,15 +107,16 @@ class _ChartPieLen extends State<ChartPieLen> {
                   }).toList(),
                 ),
                 SizedBox(width: 30),
-                Text("Jumlah Data : $total"),
+                Text("Jumlah Total Asset : $total"),
               ],
             ),
           ),
           Expanded(
             child: FutureBuilder<List<sheet_chart>>(
-              future: _fetchDataLen(),
+              future: _fetchDatapindad(),
               builder: (BuildContext context, AsyncSnapshot <List<sheet_chart>> snapshot) {
                 if (snapshot.hasData) {
+                  updateGroupedData(snapshot.data!);
                   return SfCircularChart(
                     title: ChartTitle(text: 'Grafik Aset'),
                     legend: Legend(isVisible: true),

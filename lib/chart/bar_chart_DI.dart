@@ -51,37 +51,37 @@ class _barChartDI extends State<barChartDI> {
       'Rencana Optimisasi':(sheet_chart sales) => sales.rencana_optimisasi,
 
       'jumlah nama aset': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'nama_aset', sales.nama_aset);
+        return sales.countData(widget.data_chart, 'nama_aset', sales.nama_aset??"");
       },
       'jumlah jenis aset': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'jenis_aset', sales.jenis_aset);
+        return sales.countData(widget.data_chart, 'jenis_aset', sales.jenis_aset??"");
       },
       'jumlah Kondisi': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'kondisi', sales.kondisi);
+        return sales.countData(widget.data_chart, 'kondisi', sales.kondisi??"");
       },
       'jumlah status pemakaian': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'status_pemakaian', sales.status_pemakaian);
+        return sales.countData(widget.data_chart, 'status_pemakaian', sales.status_pemakaian??"");
       },
       'jumlah Utilisasi': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'utilisasi', sales.utilisasi);
+        return sales.countData(widget.data_chart, 'utilisasi', sales.utilisasi??0);
       },
       'jumlah Tahun Perolehan': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'tahun_perolehan', sales.tahun_perolehan);
+        return sales.countData(widget.data_chart, 'tahun_perolehan', sales.tahun_perolehan??0);
       },
       'jumlah umur teknis': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'umur_teknis', sales.umur_teknis);
+        return sales.countData(widget.data_chart, 'umur_teknis', sales.umur_teknis??0);
       },
       'jumlah Sumber dana': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'sumber_dana', sales.sumber_dana);
+        return sales.countData(widget.data_chart, 'sumber_dana', sales.sumber_dana??"");
       },
       'jumlah Nilai Perolehan': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'nilai_perolehan', sales.nilai_perolehan);
+        return sales.countData(widget.data_chart, 'nilai_perolehan', sales.nilai_perolehan??0);
       },
       'jumlah Nilai Buku': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'nilai_buku', sales.nilai_buku);
+        return sales.countData(widget.data_chart, 'nilai_buku', sales.nilai_buku??0);
       },
       'jumlah rencana optimisasi': (sheet_chart sales) {
-        return sales.countData(widget.data_chart, 'rencana_optimisasi', sales.rencana_optimisasi);
+        return sales.countData(widget.data_chart, 'rencana_optimisasi', sales.rencana_optimisasi??"");
       },
     };
   }
@@ -150,7 +150,7 @@ class _barChartDI extends State<barChartDI> {
                   }).toList(),
                 ),
                 SizedBox(width: 50),
-                Text("Jumlah Data Asset : "+widget.data_chart.length.toString()),
+                Text("Jumlah Data Asset Terpilih : "+widget.data_chart.length.toString()),
               ],
             ),
           ),

@@ -1,33 +1,41 @@
 class news{
-  int id;
-  String nama_user;
-  String nama_file;
-  String link_file;
-  String timestamp;
+  int? id_surat;
+  String? nomor_surat;
+  String? link_file;
+  String? nama_file;
+  String? mime_type;
+  String? url;
+  String? date_edit;
 
   news(
-      this.id,
-      this.nama_user,
-      this.nama_file,
+      this.id_surat,
+      this.nomor_surat,
       this.link_file,
-      this.timestamp,
+      this.nama_file,
+      this.mime_type,
+      this.url,
+      this.date_edit,
       );
 
   factory news.fromJson(Map<String,dynamic>json){
     return news(
-      json['id'] as int,
-      json['nama_user'] as String,
-      json['nama_file'] as String,
-      json['link_file'] as String,
-      json['timestamp'] as String,
+      json['id_surat'] as int ?,
+      json['nomor_surat'] as String?,
+      json['link_file'] as String?,
+      json['nama_file'] as String?,
+      json['mime_type'] as String?,
+      json['url'] as String?,
+      json['date_edit'] as String?,
 
     );
   }
   Map<String,dynamic> toJson()=>{
-    'id':id ,
-    'nama_user':nama_user,
-    'nama_file':nama_file,
+    'id_surat':id_surat ,
+    'nomor_surat':nomor_surat,
     'link_file':link_file,
-    'timestamp':timestamp,
+    'nama_file':nama_file,
+    'mime_type':mime_type,
+    'url':url,
+    'date_edit':date_edit,
   };
 }

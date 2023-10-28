@@ -18,7 +18,7 @@ class _view_statistik extends State<view_statistik> {
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Color(0xff4B5526),
-          title: const Text('Statisktik'),
+          title: const Text('Statistik'),
         ),
         body: Padding(
           padding: const EdgeInsets.all(8.0),

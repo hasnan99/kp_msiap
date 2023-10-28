@@ -22,23 +22,7 @@ class _tableasset extends State<tableasset> {
   }
 
   void _filterData(String query) {
-    setState(() {
-      filteredData = data
-          .where((sheet) =>
-          sheet.nama_aset.toLowerCase().contains(query.toLowerCase()) ||
-          sheet.jenis_aset.toLowerCase().contains(query.toLowerCase()) ||
-          sheet.kondisi.toLowerCase().contains(query.toLowerCase()) ||
-          sheet.status_pemakaian.toLowerCase().contains(query.toLowerCase()) ||
-          sheet.utilisasi.toString().contains(query.toLowerCase()) ||
-          sheet.tahun_perolehan.toString().contains(query.toLowerCase()) ||
-          sheet.umur_teknis.toString().contains(query.toLowerCase()) ||
-          sheet.sumber_dana.toLowerCase().contains(query.toLowerCase()) ||
-          sheet.nilai_perolehan.toString().contains(query.toLowerCase()) ||
-          sheet.nilai_buku.toString().contains(query.toLowerCase()) ||
-          sheet.rencana_optimisasi.toLowerCase().contains(query.toLowerCase()) ||
-          sheet.lokasi.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-    });
+
   }
 
   void _sortData(int columnIndex, bool ascending) {
@@ -49,12 +33,12 @@ class _tableasset extends State<tableasset> {
         var aValue, bValue;
         switch (columnIndex) {
           case 0:
-            aValue = a.nama_aset;
-            bValue = b.nama_aset;
+            aValue = a.nama_asset;
+            bValue = b.nama_asset;
             break;
           case 1:
-            aValue = a.jenis_aset;
-            bValue = b.jenis_aset;
+            aValue = a.jenis_asset;
+            bValue = b.jenis_asset;
             break;
           case 2:
             aValue = a.kondisi;
@@ -97,8 +81,8 @@ class _tableasset extends State<tableasset> {
             bValue = b.lokasi;
             break;
           default:
-            aValue = a.nama_aset;
-            bValue = b.nama_aset;
+            aValue = a.nama_asset;
+            bValue = b.nama_asset;
         }
         final comparison = aValue.compareTo(bValue);
         return ascending ? comparison : -comparison;
@@ -391,18 +375,18 @@ class _AssetDataTableSource extends DataTableSource {
       index: index,
       cells: [
         DataCell(Text(no.toString())),
-        if (columnVisibility[0]) DataCell(Text(asset.nama_aset)),
-        if (columnVisibility[1]) DataCell(Text(asset.jenis_aset)),
-        if (columnVisibility[2]) DataCell(Text(asset.kondisi)),
-        if (columnVisibility[3]) DataCell(Text(asset.status_pemakaian)),
+        if (columnVisibility[0]) DataCell(Text(asset.nama_asset)),
+        if (columnVisibility[1]) DataCell(Text(asset.jenis_asset??"")),
+        if (columnVisibility[2]) DataCell(Text(asset.kondisi??"")),
+        if (columnVisibility[3]) DataCell(Text(asset.status_pemakaian??"")),
         if (columnVisibility[4]) DataCell(Text(asset.utilisasi as String)),
         if (columnVisibility[5]) DataCell(Text(asset.tahun_perolehan as String)),
         if (columnVisibility[6]) DataCell(Text(asset.umur_teknis as String)),
-        if (columnVisibility[7]) DataCell(Text(asset.sumber_dana)),
+        if (columnVisibility[7]) DataCell(Text(asset.sumber_dana??"")),
         if (columnVisibility[8]) DataCell(Text(asset.nilai_perolehan as String)),
         if (columnVisibility[9]) DataCell(Text(asset.nilai_buku as String)),
-        if (columnVisibility[10]) DataCell(Text(asset.rencana_optimisasi)),
-        if (columnVisibility[11]) DataCell(Text(asset.lokasi)),
+        if (columnVisibility[10]) DataCell(Text(asset.rencana_optimisasi??"")),
+        if (columnVisibility[11]) DataCell(Text(asset.lokasi??"")),
         DataCell(Image.network(asset.gambar as String)),
       ],
     );

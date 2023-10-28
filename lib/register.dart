@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kp_msiap/api/sheet_api.dart';
 import 'package:kp_msiap/login.dart';
+import 'package:http/http.dart' as http;
 
 class register extends StatefulWidget {
   const register({Key? key}) : super(key: key);
@@ -17,6 +21,7 @@ class _register extends State<register> {
   TextEditingController usernameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passController = TextEditingController();
+  TextEditingController jabatanController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +33,7 @@ class _register extends State<register> {
         body: SafeArea(
           child:SingleChildScrollView(
             child: SizedBox(
-              height: 750,
+              height:750,
               child:Form(
                 key: _formkey,
                 child: Stack(
@@ -65,7 +70,7 @@ class _register extends State<register> {
 
                     //card and footer ui
                     Positioned(
-                      bottom: 20.0,
+                      bottom: 40.0,
                       child: Column(
                         children: <Widget>[
                           buildCard(size),
@@ -83,10 +88,11 @@ class _register extends State<register> {
   }
 
   Widget buildCard(Size size) {
-    return Container(
+    return SingleChildScrollView(
+    child:Container(
       alignment: Alignment.center,
       width: size.width * 0.9,
-      height: size.height * 0.8,
+      height: 700,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(50.0),
         color: Colors.white,
@@ -170,6 +176,10 @@ class _register extends State<register> {
           SizedBox(
             height: size.height * 0.02,
           ),
+          JabatanTextField(size),
+          SizedBox(
+            height: size.height * 0.02,
+          ),
           passwordTextField(size),
           SizedBox(
             height: size.height * 0.03,
@@ -179,7 +189,7 @@ class _register extends State<register> {
           signInButton(context, size),
         ],
       ),
-
+    ),
     );
   }
 
@@ -342,6 +352,69 @@ class _register extends State<register> {
     );
   }
 
+  Widget JabatanTextField(Size size) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: SizedBox(
+        height: size.height / 12,
+        child: TextField(
+          controller: jabatanController,
+          style: GoogleFonts.inter(
+            fontSize: 16.0,
+            color: const Color(0xFF151624),
+          ),
+          cursorColor: const Color(0xFF151624),
+          decoration: InputDecoration(
+            hintText: 'Masukkan Jabatan Anda',
+            hintStyle: GoogleFonts.inter(
+              fontSize: 16.0,
+              color: const Color(0xFF151624).withOpacity(0.5),
+            ),
+            filled: true,
+            fillColor: jabatanController.text.isEmpty
+                ? const Color.fromRGBO(248, 247, 251, 1)
+                : Colors.transparent,
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(40),
+                borderSide: BorderSide(
+                  color: jabatanController.text.isEmpty
+                      ? Colors.transparent
+                      : const Color.fromRGBO(44, 185, 176, 1),
+                )),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(40),
+                borderSide: const BorderSide(
+                  color: Color.fromRGBO(44, 185, 176, 1),
+                )),
+            prefixIcon: Icon(
+              Icons.people_outline_rounded,
+              color: jabatanController.text.isEmpty
+                  ? const Color(0xFF151624).withOpacity(0.5)
+                  : const Color.fromRGBO(44, 185, 176, 1),
+              size: 16,
+            ),
+            suffix: Container(
+              alignment: Alignment.center,
+              width: 24.0,
+              height: 24.0,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(100.0),
+                color: const Color.fromRGBO(44, 185, 176, 1),
+              ),
+              child: jabatanController.text.isEmpty
+                  ? const Center()
+                  : const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 13,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget passwordTextField(Size size) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -440,15 +513,24 @@ class _register extends State<register> {
   }
 
   void handelsubmit() async {
-    if(emailController.text.isNotEmpty && passController.text.isNotEmpty){
-      try{
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(email: emailController.text, password: passController.text);
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>const login()));
-      }catch(e){
-        showSnackbar("Email Sudah Terdaftar");
+    String username = usernameController.text.trim();
+    String email = emailController.text.trim();
+    String jabatan = jabatanController.text.trim();
+    String password = passController.text.trim();
+    http.Response response= await sheet_api.register(username, email, jabatan, password);
+    Map<String, dynamic> jsonResponse = json.decode(response.body);
+    if (jsonResponse.containsKey("message") && jsonResponse["message"].isNotEmpty){
+      if (jsonResponse["message"].toString().contains("errno")) {
+        showSnackbar("Register Gagal");
+      }else{
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => login()),
+        );
       }
+    }else{
+      showSnackbar("Register Gagal");
     }
-
   }
 
   void showSnackbar(String message) {

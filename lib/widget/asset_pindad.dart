@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cached_pdfview/flutter_cached_pdfview.dart';
 import 'package:kp_msiap/api/sheet_api.dart';
 import 'package:kp_msiap/edit%20data/edit_asset_pindad.dart';
 import 'package:kp_msiap/model/sheet.dart';
 import 'package:intl/intl.dart';
-
-import '../model/kurs_helper.dart';
+import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 
 class Assetpindad extends StatefulWidget {
   final GlobalKey<_Assetpindad> assetItemKey = GlobalKey<_Assetpindad>();
@@ -28,24 +29,16 @@ class _Assetpindad extends State<Assetpindad> {
   List<sheet> cari_data = [];
   TextEditingController controller_cari = TextEditingController();
   late Future<List<sheet>> dataFuture;
-  late DatabaseHelper _databaseHelper;
+  int current_page=1;
+  int currentPageOnRefresh = 1;
+  int selectedPage = 1;
+  int items_page=10;
 
   static _Assetpindad of(BuildContext context) =>
       context.findAncestorStateOfType<_Assetpindad>()!;
 
-  Map<int, double> exchangeRates = {};
-
-  Future<void> _loadExchangeRates() async {
-    final exchangeRatesFromDB = await _databaseHelper.getExchangeRates();
-    exchangeRatesFromDB.forEach((rate) {
-      exchangeRates[rate.year] = rate.rate;
-    });
-
-    setState(() {});
-  }
-
-
   Future<List<sheet>> _fetchdatapindad() async {
+    currentPageOnRefresh = current_page;
     List<sheet> newData = await sheet_api.getAssetpindad();
     setState(() {
       data = newData;
@@ -57,16 +50,14 @@ class _Assetpindad extends State<Assetpindad> {
   void refreshData() {
     setState(() {
       dataFuture = _fetchdatapindad();
+      current_page = currentPageOnRefresh;
     });
   }
 
   @override
   void initState() {
     super.initState();
-    _fetchdatapindad();
     dataFuture= _fetchdatapindad();
-    _databaseHelper = DatabaseHelper();
-    _loadExchangeRates();
     controller_cari.text= widget.query;
   }
 
@@ -80,6 +71,7 @@ class _Assetpindad extends State<Assetpindad> {
             asset.nama_asset.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
+      current_page=1;
     });
   }
 
@@ -94,6 +86,10 @@ class _Assetpindad extends State<Assetpindad> {
 
   @override
   Widget build(BuildContext context) {
+    List<sheet> currentPageData = cari_data
+        .skip((current_page - 1) * items_page)
+        .take(items_page)
+        .toList();
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -111,6 +107,42 @@ class _Assetpindad extends State<Assetpindad> {
               onChanged: caridata,
             ),
           ),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (current_page > 1) {
+                    setState(() {
+                      current_page--;
+                      currentPageOnRefresh--;
+                    });
+                  }
+                },
+              ),
+              DropdownButton<int>(
+                items: List.generate((cari_data.length / items_page).ceil(), (index) => DropdownMenuItem(value: index + 1, child: Text('Page ${index + 1}'))),
+                onChanged: (value) {
+                  setState(() {
+                    current_page = value!;
+                    currentPageOnRefresh = value!;
+                  });
+                },
+                value: current_page,
+              ),
+              IconButton(
+                icon: Icon(Icons.arrow_forward),
+                onPressed: () {
+                  if (current_page < (cari_data.length / items_page).ceil()) {
+                    setState(() {
+                      current_page++;
+                      currentPageOnRefresh++;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
           FutureBuilder<List<sheet>>(
             future: dataFuture,
             builder: (context, snapshot) {
@@ -119,32 +151,29 @@ class _Assetpindad extends State<Assetpindad> {
               } else if (snapshot.hasError) {
                 return Text('Error: ${snapshot.error}');
               } else if (snapshot.hasData) {
-                int jumlah_data=1;
                 return GridView.builder(
                   gridDelegate:
                   const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 0.68,
                   ),
+                  cacheExtent: 1500,
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
                   padding: const EdgeInsets.only(top: 15),
-                  itemCount: cari_data.length,
+                  itemCount: currentPageData.length,
                   itemBuilder: (context, index) {
-                    double exchangeRate = exchangeRates[cari_data[index].tahun_perolehan] ?? 0.0;
-                    double nilaiPerolehan = cari_data[index].nilai_perolehan?.toDouble()??0;
-                    double nilaiPerolehanDolar = nilaiPerolehan / exchangeRate;
                     var array_gambar = jsonDecode(cari_data[index].gambar ?? '[]');
                     List? url_gambar = array_gambar != null ? List.from(array_gambar) : null;
+                    int jumlah_data=(current_page - 1) * items_page + index + 1;
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => AssetDetailPage(
-                              data: cari_data[index],
+                              data: currentPageData[index],
                               refreshCallback: _fetchdatapindad,
-                              nilaiPerolehanDolar: nilaiPerolehanDolar,
                             ),
                           ),
                         );
@@ -161,28 +190,34 @@ class _Assetpindad extends State<Assetpindad> {
                             Container(
                               padding: const EdgeInsets.only(left: 10),
                               alignment: Alignment.center,
-                              child: cari_data[index].gambar != null
-                                  ? Image.network(url_gambar?.last,
-                                height: 150,)
+                              child: currentPageData[index].gambar != null
+                                  ? CachedNetworkImage(
+                                imageUrl: url_gambar?.last,
+                                cacheManager: DefaultCacheManager(),
+                                memCacheHeight: 100,
+                                memCacheWidth: 100,
+                                placeholder: (context, url) => CircularProgressIndicator(),
+                                errorWidget: (context, url, error) => Icon(Icons.error),
+                              )
                                   : Text("Gambar belum ditambahkan."),
                             ),
                             Container(
                               padding: const EdgeInsets.only(left: 10),
                               alignment: Alignment.topLeft,
                               child:
-                              Text("No : ${jumlah_data++}"),
+                              Text("No : ${jumlah_data}"),
                             ),
                             Container(
                               padding: const EdgeInsets.only(left: 10),
                               alignment: Alignment.topLeft,
                               child:
-                              Text("ID : ${cari_data[index].id}"),
+                              Text("ID : ${currentPageData[index].id}"),
                             ),
                             Container(
                               padding: const EdgeInsets.only(left: 10),
                               alignment: Alignment.center,
                               child: Text(
-                                  "Nama Aset : ${cutnamaaset(cari_data[index].nama_asset)}"),
+                                  "Nama Aset : ${cutnamaaset(currentPageData[index].nama_asset)}"),
                             ),
                           ],
                         ),
@@ -195,6 +230,40 @@ class _Assetpindad extends State<Assetpindad> {
               }
             },
           ),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (current_page > 1) {
+                    setState(() {
+                      current_page--;
+                    });
+                  }
+                },
+              ),
+              DropdownButton<int>(
+                items: List.generate((cari_data.length / items_page).ceil(), (index) => DropdownMenuItem(value: index + 1, child: Text('Page ${index + 1}'))),
+                onChanged: (value) {
+                  setState(() {
+                    current_page = value!;
+                    currentPageOnRefresh = value;
+                  });
+                },
+                value: current_page,
+              ),
+              IconButton(
+                icon: Icon(Icons.arrow_forward),
+                onPressed: () {
+                  if (current_page < (cari_data.length / items_page).ceil()) {
+                    setState(() {
+                      current_page++;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -204,9 +273,8 @@ class _Assetpindad extends State<Assetpindad> {
 class AssetDetailPage extends StatefulWidget {
   final sheet data;
   final VoidCallback refreshCallback;
-  final double nilaiPerolehanDolar;
 
-  const AssetDetailPage({Key? key, required this.data, required this.refreshCallback, required this.nilaiPerolehanDolar}) : super(key: key);
+  const AssetDetailPage({Key? key, required this.data, required this.refreshCallback}) : super(key: key);
 
   @override
   _AssetDetailPageState createState() => _AssetDetailPageState();
@@ -244,7 +312,8 @@ class _AssetDetailPageState extends State<AssetDetailPage> {
             height: 250,
             alignment: Alignment.center,
             child:  widget.data.gambar != null && widget.data.gambar!.isNotEmpty
-                ? Image.network(url_gambar?.last, height: 250)
+                ? FancyShimmerImage(
+                imageUrl: url_gambar?.last, height: 250)
                 : Text("Gambar Belum ada"),
           ),
           Container(

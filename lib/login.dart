@@ -1,23 +1,21 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kp_msiap/api/push_notif.dart';
 import 'package:kp_msiap/beranda.dart';
 import 'package:kp_msiap/register.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api/auth.dart';
-import 'model/kurs_helper.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+  await CustomCacheManager.instance;
   await Firebase.initializeApp();
-  DatabaseHelper databaseHelper = DatabaseHelper();
-  await databaseHelper.initializeDatabase();
   SharedPreferences prefs = await SharedPreferences.getInstance();
   var uid = prefs.getString('uid');
   AwesomeNotifications().initialize(
@@ -34,6 +32,19 @@ void main() async{
   ));
 }
 
+class CustomCacheManager {
+  static const key = 'gambar_key';
+  static CacheManager instance = CacheManager(
+    Config(
+      key,
+      stalePeriod: const Duration(days: 7),
+      maxNrOfCacheObjects: 500,
+      repo: JsonCacheInfoRepository(databaseName: key),
+      fileService: HttpFileService(),
+    ),
+  );
+}
+
 class login extends StatefulWidget {
   const login({Key? key}) : super(key: key);
 
@@ -46,8 +57,6 @@ class _login extends State<login> {
   final _formkey=GlobalKey<FormState>();
   TextEditingController emailController = TextEditingController();
   TextEditingController passController = TextEditingController();
-
-
 
   @override
   Widget build(BuildContext context) {

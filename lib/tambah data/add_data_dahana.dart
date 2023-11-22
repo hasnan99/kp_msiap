@@ -69,32 +69,6 @@ class _AddData_dahana extends State<AddData_dahana> {
   TextEditingController? kartu_mesincontrol = TextEditingController();
   TextEditingController? kartu_elektronikcontrol = TextEditingController();
 
-  List<DropdownMenuItem<String>> get kategori_mesin_item{
-    List<DropdownMenuItem<String>> kategori_fungsi_mesin = [
-      DropdownMenuItem(child: Text("-Kosong-"),value: "kosong"),
-      DropdownMenuItem(child: Text("Bubut"),value: "bubut"),
-      DropdownMenuItem(child: Text("Cutting"),value: "cutting"),
-      DropdownMenuItem(child: Text("Ketik"), value: customkategori_mesin?.text),
-    ];
-    return kategori_fungsi_mesin;
-  }
-
-  List<DropdownMenuItem<String>> get raw_material{
-    List<DropdownMenuItem<String>> raw_material = [
-      DropdownMenuItem(child: Text("Kosong"),value: "Kosong"),
-      DropdownMenuItem(child: Text("Bubut"),value: "bubut"),
-      DropdownMenuItem(child: Text("Cutting"),value: "cutting"),
-      DropdownMenuItem(child: Text("Ketik"), value: customRawMaterialController?.text),
-    ];
-    return raw_material;
-  }
-
-  String selected_kategori_mesin='kosong';
-  String selected_raw_material='Kosong';
-
-  List<String> selectedItems_kategori_mesin = [];
-  List<String> selectedItems_raw_material = [];
-
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
     String nama_table="dahana";
@@ -114,8 +88,6 @@ class _AddData_dahana extends State<AddData_dahana> {
     String user_edit=user!.email.toString();
     String merk=merkcontrol?.text??"Na";
     String tipe_mesin=tipe_mesincontrol?.text??"Na";
-    List<String> kategori_mesin=selectedItems_kategori_mesin.map((item) => '"$item"').toList();
-    List<String> raw_material=selectedItems_raw_material.map((item) => '"$item"').toList();
     String? data_sheet;
     if (linkdrive == true) {
       data_sheet = data_sheetcontrol?.text??"Na";
@@ -127,7 +99,7 @@ class _AddData_dahana extends State<AddData_dahana> {
 
     http.Response response=await sheet_api.tambahdata(nama_table,id,nama_aset, jenis_aset, kondisi, status_pemakaian, utilitas,
         tahun_perolehan, umur_teknis, sumber_dana, nilai_perolehan, nilai_buku, rencana_optimisasi, lokasi,
-        user_edit,merk,tipe_mesin,kategori_mesin,raw_material,data_sheet,kartu_mesin,kartu_elektronik,linkdrive);
+        user_edit,merk,tipe_mesin,data_sheet,kartu_mesin,kartu_elektronik,linkdrive);
     Map<String, dynamic> jsonResponse = json.decode(response.body);
     if (jsonResponse.containsKey("message") && jsonResponse["message"].isNotEmpty){
       if (jsonResponse["message"].toString().contains("errno")) {
@@ -689,106 +661,6 @@ class _AddData_dahana extends State<AddData_dahana> {
                             margin: const EdgeInsets.symmetric(vertical: 10),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children:  <Widget>[
-                                const Text(
-                                  "Kategori Fungsi Mesin",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 15),
-                                ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                DropdownButtonFormField(
-                                  decoration: InputDecoration(
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.grey, width: 2),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                  ),
-                                  items: kategori_mesin_item,
-                                  value: selected_kategori_mesin,
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      selected_kategori_mesin = newValue!;
-                                      selectedItems_kategori_mesin.add(selected_kategori_mesin);
-                                    });
-                                  },
-                                ),
-                                if (selected_kategori_mesin == customkategori_mesin?.text)
-                                  TextFormField(
-                                    controller: customkategori_mesin,
-                                    onEditingComplete: () {
-                                      setState(() {
-                                        selected_kategori_mesin = customkategori_mesin!.text;
-                                        selectedItems_kategori_mesin.add(customkategori_mesin!.text);
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: "Masukkan Kategori Mesin",
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(color: Colors.grey, width: 2),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                  ),
-                                Text('Item yang dipilih (Kategori Mesin): ${selectedItems_kategori_mesin.join(', ')}'),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.symmetric(vertical: 10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children:  <Widget>[
-                                const Text(
-                                  "Raw Material",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 15),
-                                ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                DropdownButtonFormField(
-                                  decoration: InputDecoration(
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.grey, width: 2),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                  ),
-                                  items: raw_material,
-                                  value: selected_raw_material,
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      selected_raw_material = newValue!;
-                                      selectedItems_raw_material.add(selected_raw_material);
-                                    });
-                                  },
-                                ),
-                                if (selected_raw_material == customRawMaterialController?.text)
-                                  TextFormField(
-                                    controller: customRawMaterialController,
-                                    onEditingComplete: () {
-                                      setState(() {
-                                        selected_raw_material = customRawMaterialController!.text;
-                                        selectedItems_raw_material.add(customRawMaterialController!.text);
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: "Masukkan raw material",
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(color: Colors.grey, width: 2),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                  ),
-                                Text('Item yang dipilih (Raw Material): ${selectedItems_raw_material.join(', ')}'),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.symmetric(vertical: 10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children:[
                                 Text(
                                   "Data Sheet",
@@ -917,7 +789,7 @@ class _AddData_dahana extends State<AddData_dahana> {
                                     ImagePicker imagepicker = ImagePicker();
                                     XFile? file = await imagepicker.pickImage(
                                       source: ImageSource.camera,
-                                      imageQuality: 60,
+                                      imageQuality: 5,
                                     );
                                     EasyLoading.show(status: 'Mengupload Gambar');
                                     if (file == null) return;

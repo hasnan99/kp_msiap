@@ -1,12 +1,13 @@
 import 'dart:convert';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_cached_pdfview/flutter_cached_pdfview.dart';
 import 'package:kp_msiap/api/sheet_api.dart';
 import 'package:kp_msiap/model/sheet.dart';
 import 'package:intl/intl.dart';
+import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 import '../edit data/edit_asset_dahana.dart';
-import '../model/kurs_helper.dart';
 
 class AssetDahana extends StatefulWidget {
   final GlobalKey<_AssetDahana> assetItemKey = GlobalKey<_AssetDahana>();
@@ -27,44 +28,43 @@ class _AssetDahana extends State<AssetDahana> {
   List<sheet> cari_data = [];
   TextEditingController controller_cari = TextEditingController();
   late Future<List<sheet>> dataFuture;
-  late DatabaseHelper _databaseHelper;
+  int current_page=1;
+  int items_page=10;
+  int currentPageOnRefresh = 1;
 
   static _AssetDahana of(BuildContext context) =>
       context.findAncestorStateOfType<_AssetDahana>()!;
 
-  Map<int, double> exchangeRates = {};
-
-  Future<void> _loadExchangeRates() async {
-    final exchangeRatesFromDB = await _databaseHelper.getExchangeRates();
-    exchangeRatesFromDB.forEach((rate) {
-      exchangeRates[rate.year] = rate.rate;
-    });
-
-    setState(() {});
-  }
-
   Future<List<sheet>> _fetchdatadahana() async {
-    List<sheet> newData = await sheet_api.getAssetDahana();
-    setState(() {
-      data = newData;
-      caridata(controller_cari.text);
-    });
-    return newData;
+    try {
+      setState(() {
+        currentPageOnRefresh = current_page;
+      });
+      List<sheet> newData = await sheet_api.getAssetDahana();
+      setState(() {
+        data = newData;
+        caridata(controller_cari.text);
+      });
+
+      return newData;
+    } catch (e) {
+      print(e.toString());
+      print(dataFuture.toString());
+    }
+    return data;
   }
 
   void refreshData() {
     setState(() {
       dataFuture = _fetchdatadahana();
+      currentPageOnRefresh = current_page;
     });
   }
 
   @override
   void initState() {
     super.initState();
-    _fetchdatadahana();
     dataFuture = _fetchdatadahana();
-    _databaseHelper = DatabaseHelper();
-    _loadExchangeRates();
     controller_cari.text= widget.query;
   }
 
@@ -77,6 +77,11 @@ class _AssetDahana extends State<AssetDahana> {
             .where((asset) =>
             asset.nama_asset.toLowerCase().contains(query.toLowerCase()))
             .toList();
+      }
+      if(query.isNotEmpty){
+        current_page=1;
+      }else{
+        current_page=currentPageOnRefresh;
       }
     });
   }
@@ -91,108 +96,184 @@ class _AssetDahana extends State<AssetDahana> {
   }
   @override
   Widget build(BuildContext context) {
+    List<sheet> currentPageData = cari_data
+        .skip((current_page - 1) * items_page)
+        .take(items_page)
+        .toList();
     return SingleChildScrollView(
-    child: Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextFormField(
-            controller: controller_cari,
-            decoration: InputDecoration(
-              hintText: "Cari Aset",
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onChanged: caridata,
-          ),
-        ),
-        FutureBuilder<List<sheet>>(
-          future: dataFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator();
-            } else if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            } else if (snapshot.hasData) {
-              int jumlah_data=1;
-              return GridView.builder(
-                gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.68,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: controller_cari,
+              decoration: InputDecoration(
+                hintText: "Cari Aset",
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                padding: const EdgeInsets.only(top: 15),
-                itemCount: cari_data.length,
-                itemBuilder: (context, index) {
-                  double exchangeRate = exchangeRates[cari_data[index].tahun_perolehan] ?? 0.0;
-                  double nilaiPerolehan = cari_data[index].nilai_perolehan?.toDouble()??0.0;
-                  double nilaiPerolehanDolar = nilaiPerolehan / exchangeRate;
-                  var array_gambar = jsonDecode(cari_data[index].gambar ?? '[]');
-                  List? url_gambar = array_gambar != null ? List.from(array_gambar) : null;
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AssetDetailPage(
-                            data: cari_data[index],
-                            refreshCallback: _fetchdatadahana,
-                            nilaiPerolehanDolar: nilaiPerolehanDolar,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 20, horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xffeef1f4),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.only(left: 10),
-                            alignment: Alignment.center,
-                            child: cari_data[index].gambar != null
-                                ? Image.network(url_gambar?.last,
-                              height: 150,
-                                  )
-                                : Text("Gambar belum ditambahkan."),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.only(left: 10),
-                            alignment: Alignment.topLeft,
-                            child:
-                            Text("No : ${jumlah_data++}"),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.only(left: 10),
-                            alignment: Alignment.topLeft,
-                            child:
-                            Text("ID : ${cari_data[index].id}"),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.only(left: 10),
-                            alignment: Alignment.center,
-                            child: Text(
-                                "Nama Aset : ${cutnamaaset(cari_data[index].nama_asset)}"),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+              ),
+              onChanged: caridata,
+            ),
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (current_page > 1) {
+                    setState(() {
+                      current_page--;
+                      currentPageOnRefresh--;
+                    });
+                  }
                 },
-              );
-            } else {
-              return const Text('No data');
-            }
-          },
-        ),
+              ),
+              DropdownButton<int>(
+                items: List.generate((cari_data.length / items_page).ceil(), (index) => DropdownMenuItem(value: index + 1, child: Text('Page ${index + 1}'))),
+                onChanged: (value) {
+                  setState(() {
+                    current_page = value!;
+                    currentPageOnRefresh = value!;
+                  });
+                },
+                value: current_page,
+              ),
+              IconButton(
+                icon: Icon(Icons.arrow_forward),
+                onPressed: () {
+                  if (current_page < (cari_data.length / items_page).ceil()) {
+                    setState(() {
+                      current_page++;
+                      currentPageOnRefresh++;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+          FutureBuilder<List<sheet>>(
+            future: dataFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else if (snapshot.hasData) {
+                return GridView.builder(
+                  gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.68,
+                  ),
+                  cacheExtent: 1500,
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.only(top: 15),
+                  itemCount: currentPageData.length,
+                  itemBuilder: (context, index) {
+                    var array_gambar = jsonDecode(currentPageData[index].gambar ?? '[]');
+                    List? url_gambar = array_gambar != null ? List.from(array_gambar) : null;
+                    int jumlah_data=(current_page - 1) * items_page + index + 1;
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AssetDetailPage(
+                              data: currentPageData[index],
+                              refreshCallback: _fetchdatadahana,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 20, horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffeef1f4),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.only(left: 10),
+                              alignment: Alignment.center,
+                              child:currentPageData[index].gambar != null
+                                  ?CachedNetworkImage(
+                                imageUrl: url_gambar?.last,
+                                cacheManager: DefaultCacheManager(),
+                                memCacheHeight: 100,
+                                memCacheWidth: 100,
+                                placeholder: (context, url) => CircularProgressIndicator(),
+                                errorWidget: (context, url, error) => Icon(Icons.error),
+                              )
+                                  : Text("Gambar belum ditambahkan."),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.only(left: 10),
+                              alignment: Alignment.topLeft,
+                              child:
+                              Text("No : ${jumlah_data}"),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.only(left: 10),
+                              alignment: Alignment.topLeft,
+                              child:
+                              Text("ID : ${currentPageData[index].id}"),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.only(left: 10),
+                              alignment: Alignment.center,
+                              child: Text(
+                                  "Nama Aset : ${cutnamaaset(currentPageData[index].nama_asset)}"),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              } else {
+                return const Text('No data');
+              }
+            },
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (current_page > 1) {
+                    setState(() {
+                      current_page--;
+                    });
+                  }
+                },
+              ),
+              DropdownButton<int>(
+                items: List.generate((cari_data.length / items_page).ceil(), (index) => DropdownMenuItem(value: index + 1, child: Text('Page ${index + 1}'))),
+                onChanged: (value) {
+                  setState(() {
+                    current_page = value!;
+                    currentPageOnRefresh = value!;
+                  });
+                },
+                value: current_page,
+              ),
+              IconButton(
+                icon: Icon(Icons.arrow_forward),
+                onPressed: () {
+                  if (current_page < (cari_data.length / items_page).ceil()) {
+                    setState(() {
+                      current_page++;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -202,8 +283,7 @@ class _AssetDahana extends State<AssetDahana> {
 class AssetDetailPage extends StatefulWidget {
   final sheet data;
   final VoidCallback refreshCallback;
-  final double nilaiPerolehanDolar;
-  const AssetDetailPage({Key? key, required this.data, required this.refreshCallback, required this.nilaiPerolehanDolar}) : super(key: key);
+  const AssetDetailPage({Key? key, required this.data, required this.refreshCallback}) : super(key: key);
 
   @override
   _AssetDetailPageState createState() => _AssetDetailPageState();
@@ -241,7 +321,8 @@ class _AssetDetailPageState extends State<AssetDetailPage> {
                 height: 250,
                 alignment: Alignment.center,
                 child:  widget.data.gambar != null && widget.data.gambar!.isNotEmpty
-                    ? Image.network(url_gambar?.last, height: 250)
+                    ? FancyShimmerImage(
+                    imageUrl: url_gambar?.last, height: 250)
                     : Text("Gambar Belum ada"),
               ),
               Container(

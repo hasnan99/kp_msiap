@@ -216,8 +216,6 @@ class sheet_api {
       String userEdit,
       String merk,
       String tipeMesin,
-      List<String> kategoriFungsiMesin,
-      List<String> rawMaterial,
       String dataSheet,
       String kartuMesin,
       String kartuElektronik,
@@ -241,8 +239,6 @@ class sheet_api {
       ..fields['lokasi'] = lokasi
       ..fields['user_edit'] = userEdit
       ..fields['merk'] = merk
-      ..fields['kategori_fungsi_mesin'] =kategoriFungsiMesin.toString()
-      ..fields['raw_material'] = rawMaterial.toString()
       ..fields['tipe_mesin'] = tipeMesin
       ..fields['kartu_elektronik'] = kartuElektronik;
 
@@ -284,8 +280,6 @@ class sheet_api {
       String userEdit,
       String merk,
       String tipeMesin,
-      List<String> kategoriFungsiMesin,
-      List<String> rawMaterial,
       String dataSheet,
       String kartuMesin,
       String kartuElektronik,
@@ -308,8 +302,6 @@ class sheet_api {
       ..fields['lokasi'] = lokasi
       ..fields['user_edit'] = userEdit
       ..fields['merk'] = merk
-      ..fields['kategori_fungsi_mesin'] =kategoriFungsiMesin.toString()
-      ..fields['raw_material'] = rawMaterial.toString()
       ..fields['tipe_mesin'] = tipeMesin
       ..fields['kartu_elektronik'] = kartuElektronik;
 

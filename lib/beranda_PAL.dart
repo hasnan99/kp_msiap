@@ -1,9 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:kp_msiap/api/sheet_api.dart';
 import 'package:kp_msiap/tambah%20data/add_data_pal.dart';
 import 'package:kp_msiap/widget/asset_pal.dart';
 import 'package:refresh/refresh.dart';
+
+import 'model/sheet.dart';
 
 class Beranda_PAL extends StatefulWidget {
   final String query;
@@ -15,7 +18,7 @@ class Beranda_PAL extends StatefulWidget {
 
 class _Beranda_PAL extends State<Beranda_PAL> {
   int currentIndex = 0;
-
+  int jumlah_pal=0;
   RefreshController _refreshController =
   RefreshController(initialRefresh: false);
 
@@ -27,9 +30,19 @@ class _Beranda_PAL extends State<Beranda_PAL> {
     });
   }
 
+  Future<int> _fetchJumlahpal() async {
+    List<sheet> Data = await sheet_api.getAssetPAL();
+    return Data.length;
+  }
+
   @override
   void initState() {
     super.initState();
+    _fetchJumlahpal().then((jumlah) {
+      setState(() {
+        jumlah_pal = jumlah;
+      });
+    });
   }
 
   Future <void> _onRefresh() async{
@@ -45,7 +58,7 @@ class _Beranda_PAL extends State<Beranda_PAL> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xff4B5526),
-        title: const Text('Daftar Aset PAL'),
+        title: Text('Daftar Aset PAL ${jumlah_pal.toString()} unit'),
       ),
       body: SmartRefresher(
         controller: _refreshController,

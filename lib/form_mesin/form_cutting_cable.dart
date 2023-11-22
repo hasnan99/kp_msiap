@@ -1,10 +1,15 @@
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:kp_msiap/api/sheet_api.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:screenshot/screenshot.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 class form_cutting_cable extends StatefulWidget {
   const form_cutting_cable({Key? key}) : super(key: key);
@@ -16,6 +21,7 @@ class form_cutting_cable extends StatefulWidget {
 class _form_cutting_cable extends State<form_cutting_cable> {
   final _auth = FirebaseAuth.instance;
   late User? user;
+  String? hasil_pencarian;
 
   void getuseremail() async {
     user = _auth.currentUser;
@@ -90,29 +96,41 @@ class _form_cutting_cable extends State<form_cutting_cable> {
         }
       }
 
-      final materialInput = "Steel";
-      final dimensiDiameterInput = "10";
-      final dimensiPanjangInput ="150";
+      final materialInput = materialTextController.text;
+      final dimensiDiameterInput = dimensiDiameterTextController.text;
+      final dimensiPanjangInput =dimensiPanjangTextController.text;
 
       final results = findMatchingData(materialInput, dimensiDiameterInput, dimensiPanjangInput);
-
-      print(results.join(', '));
+      setState(() {
+        hasil_pencarian = results.join(', ');
+      });
     } catch (error) {
-      showSnackbarfail("Terjadi kesalahan: $error");
+      print("Terjadi kesalahan: $error");
     }
   }
+
+  List<String> materialOptions = [
+    'Steel',
+    'Aluminum',
+    'Stainless Steel',
+    'Board',
+    'Component',
+    'Raw Material Diameter',
+    'Conductor Cross Section',
+  ];
+
 
   String getKeyForURL(String url) {
     if (url.contains("len")) {
       return 'PT.Len';
     } else if (url.contains("dahana")) {
-      return 'dahana';
+      return 'Pt.Dahana';
     } else if (url.contains("di")) {
-      return 'di';
+      return 'PT.DI';
     } else if (url.contains("pindad")) {
-      return 'pindad';
+      return 'PT.Pindad';
     } else if (url.contains("pal")) {
-      return 'pal';
+      return 'PT.PAL';
     } else {
       return '';
     }
@@ -131,9 +149,12 @@ class _form_cutting_cable extends State<form_cutting_cable> {
       final data = entry.value;
       for (var item in data) {
         if (item['jenis_material'] == material &&
-            (item['dimensi-kecil-diameter'] == null ? 'null' : item['dimensi-kecil-diameter'].toString()) == diameter &&
-            (item['dimensi-kecil-panjang'] == null ? 'null' : item['dimensi-kecil-panjang'].toString()) == panjang) {
+            ((item['dimensi-kecil-diameter'] == null ? 'null' : item['dimensi-kecil-diameter'].toString()) == diameter ||
+                (item['dimensi-besar-diameter'] == null ? 'null' : item['dimensi-besar-diameter'].toString()) == diameter)&&
+            (item['dimensi-kecil-panjang'] == null ? 'null' : item['dimensi-kecil-panjang'].toString()) == panjang ||
+                (item['dimensi-besar-panjang'] == null ? 'null' : item['dimensi-besar-panjang'].toString()) == panjang) {
           results.add(key);
+          break;
         }
       }
     }
@@ -216,14 +237,26 @@ class _form_cutting_cable extends State<form_cutting_cable> {
                                 const SizedBox(
                                   height: 10,
                                 ),
-                                TextFormField(
-                                  controller: materialTextController,
+                                DropdownButtonFormField<String>(
+                                  value: materialTextController.text==''?null:materialTextController.text,
+                                  items: materialOptions.map((String material) {
+                                    return DropdownMenuItem<String>(
+                                      value: material,
+                                      child: Text(material),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    // Update the selected value
+                                    setState(() {
+                                      materialTextController.text = newValue ?? '';
+                                    });
+                                  },
                                   decoration: const InputDecoration(
                                     border: InputBorder.none,
                                     fillColor: Color(0xffD6D6D6),
                                     filled: true,
                                   ),
-                                )
+                                ),
                               ],
                             ),
                           ),
@@ -288,8 +321,17 @@ class _form_cutting_cable extends State<form_cutting_cable> {
                             primary: const Color(0xff4B5526),
                             onPrimary: Colors.white,
                           ),
-                          onPressed: () {
-                            fetchDataFromServer();
+                          onPressed: () async {
+                            await fetchDataFromServer();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => GeneratePdf(
+                                  hasil: hasil_pencarian??'',
+                                material: materialTextController.text,
+                                dimensiDiameter: dimensiDiameterTextController.text,
+                                dimensiPanjang: dimensiPanjangTextController.text,),
+                              ),
+                            );
                           },
                           child: const Text('Cari'),
                         ),
@@ -303,5 +345,200 @@ class _form_cutting_cable extends State<form_cutting_cable> {
         ),
       ),
     );
+  }
+}
+
+class GeneratePdf extends StatefulWidget {
+  final String hasil;
+  final String? material;
+  final String? dimensiDiameter;
+  final String? dimensiPanjang;
+  GeneratePdf({Key? key, required this.hasil, this.material, this.dimensiDiameter, this.dimensiPanjang}) : super(key: key);
+
+  @override
+  _GeneratePdfState createState() => _GeneratePdfState();
+}
+
+class _GeneratePdfState extends State<GeneratePdf> {
+  final pdf = pw.Document();
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  ScreenshotController screenshotController = ScreenshotController();
+
+  Future<void> savePdf(String fileName) async {
+    try {
+      var data = await rootBundle.load("assets/times.ttf");
+      final font = pw.Font.ttf(data.buffer.asByteData());
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Center(
+                  child: pw.Text('Form Mesin Kebutuhan Indhan', style: pw.TextStyle(font: font, fontSize: 16)),
+                ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.SizedBox(height: 20),
+                    pw.Text("Hasil Pencarian Untuk cutting cable",style: pw.TextStyle(fontSize: 14,font: font)),
+                    pw.Text("Material : ${widget.material}",style: pw.TextStyle(fontSize: 12,font: font)),
+                    pw.Text("Dimensi Diameter : ${widget.dimensiDiameter}",style: pw.TextStyle(fontSize: 12,font: font)),
+                    pw.Text("Dimensi Panjang : ${widget.dimensiPanjang}",style:  pw.TextStyle(fontSize: 12,font: font)),
+                    pw.SizedBox(height: 20),
+                    pw.Text('Hasil Pencarian ada di Entitas Indhan :', style: pw.TextStyle(font: font, fontSize: 14)),
+                    pw.Text(widget.hasil ?? '', style: pw.TextStyle(font: font, fontSize: 12)),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      final dir = Directory('/storage/emulated/0/Download');
+      final file = File('${dir.path}/$fileName.pdf');
+      await file.writeAsBytes(await pdf.save());
+      showSnackbar('PDF berhasil disimpan di ${file.path}');
+    } catch (e) {
+      showSnackbarfail('Terjadi kesalahan saat menyimpan PDF');
+    }
+  }
+
+  void showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: AwesomeSnackbarContent(
+          title: 'Berhasil',
+          message: message,
+          contentType: ContentType.success,
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void showSnackbarfail(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: AwesomeSnackbarContent(
+          title: 'Gagal',
+          message: message,
+          contentType: ContentType.failure,
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: scaffoldKey,
+      appBar: AppBar(
+        title: const Text("Hasil Pencarian"),
+        backgroundColor: const Color(0xff4B5526),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Screenshot(
+              controller: screenshotController,
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                children: [
+                  const Text("Hasil Pencarian Untuk cutting cable",style: TextStyle(fontSize: 20)),
+                  SizedBox(height: 20),
+                  Text("Material : ${widget.material}",style: TextStyle(fontSize: 20)),
+                  Text("Dimensi Diameter : ${widget.dimensiDiameter}",style: TextStyle(fontSize: 20)),
+                  Text("Dimensi Panjang : ${widget.dimensiPanjang}",style: const TextStyle(fontSize: 20)),
+                  SizedBox(height: 20),
+                  const Text("Hasil Pencarian ada di Entitas Indhan :",style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold)),
+                  SizedBox(height: 20),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(widget.hasil,style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold)),
+                  ),
+                ],
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                ElevatedButton(
+                  onPressed: () {
+                    savetogallery();
+                  },
+                  child: Text("Simpan Gambar"),
+                ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        final controller = TextEditingController();
+                        return AlertDialog(
+                          title: Text('Simpan PDF'),
+                          content: TextField(
+                            controller: controller,
+                            decoration: InputDecoration(labelText: 'Nama File'),
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              child: Text('Batal'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            TextButton(
+                              child: Text('Simpan'),
+                              onPressed: () {
+                                final fileName = controller.text;
+                                if (fileName.isNotEmpty) {
+                                  savePdf(fileName);
+                                }
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  child: Text("Simpan PDF"),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  savetogallery() {
+    screenshotController.capture(delay: Duration(milliseconds: 10)).then((Uint8List? image){
+      savescreenshot(image!);
+    });
+    showSnackbar('Gambar berhasil disimpan di Gallery');
+  }
+
+  savescreenshot(Uint8List bytes)async {
+    final time=DateTime.now().toIso8601String()
+    .replaceAll('.', '-')
+    .replaceAll(':', '-');
+    final name="Screenshot$time";
+    await ImageGallerySaver.saveImage(bytes, name: name);
   }
 }

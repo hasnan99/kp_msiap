@@ -1,9 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:kp_msiap/api/sheet_api.dart';
 import 'package:kp_msiap/tambah%20data/add_data_di.dart';
 import 'package:kp_msiap/widget/asset_DI.dart';
 import 'package:refresh/refresh.dart';
+
+import 'model/sheet.dart';
 
 class Beranda_DI extends StatefulWidget {
   final String query;
@@ -15,7 +17,7 @@ class Beranda_DI extends StatefulWidget {
 
 class _Beranda_DI extends State<Beranda_DI> {
   int currentIndex = 0;
-
+  int jumlah_di=0;
   RefreshController _refreshController =
   RefreshController(initialRefresh: false);
 
@@ -28,9 +30,19 @@ class _Beranda_DI extends State<Beranda_DI> {
     });
   }
 
+  Future<int> _fetchJumlahdi() async {
+    List<sheet> Data = await sheet_api.getAssetDI();
+    return Data.length;
+  }
+
   @override
   void initState() {
     super.initState();
+    _fetchJumlahdi().then((jumlah) {
+      setState(() {
+        jumlah_di = jumlah;
+      });
+    });
   }
 
   Future <void> _onRefresh() async{
@@ -46,7 +58,7 @@ class _Beranda_DI extends State<Beranda_DI> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xff4B5526),
-        title: const Text('Daftar Aset DI'),
+        title: Text('Daftar Aset DI ${jumlah_di.toString()} unit'),
       ),
       body: SmartRefresher(
         controller: _refreshController,

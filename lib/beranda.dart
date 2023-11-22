@@ -40,6 +40,8 @@ import 'model/log.dart';
 import 'model/news.dart';
 import 'package:flutter_cached_pdfview/flutter_cached_pdfview.dart';
 
+import 'model/sheet.dart';
+
 class Beranda extends StatefulWidget {
   const Beranda({Key? key}) : super(key: key);
   @override
@@ -54,6 +56,7 @@ class _BerandaState extends State<Beranda> {
   int jumlah_mailbox_out=0;
   int total_mailbox=0;
   int total_notif=0;
+  int total_len=0;
   late TutorialCoachMark tutorialCoachMark;
   final _auth = FirebaseAuth.instance;
   late User? user;
@@ -95,6 +98,11 @@ class _BerandaState extends State<Beranda> {
   Future<int> _fetchJumlahNotif() async {
     List<Log> logData = await sheet_api.getLog();
     return logData.length;
+  }
+
+  Future<int> _fetchJumlahlen() async {
+    List<sheet> Datalen = await sheet_api.getAssetLen();
+    return Datalen.length;
   }
 
   void buat_tutor(){
@@ -437,6 +445,12 @@ class _BerandaState extends State<Beranda> {
       });
     });
 
+    _fetchJumlahlen().then((jumlah) {
+      setState(() {
+        total_len = jumlah;
+      });
+    });
+
     assetItem=AssetItem(
       onTextFieldValue: (value){
         setState(() {
@@ -498,7 +512,7 @@ class _BerandaState extends State<Beranda> {
           return Scaffold(
             appBar: AppBar(
               backgroundColor: const Color(0xff4B5526),
-              title: const Text('Daftar Aset Len'),
+              title:Text('Daftar Aset Len ${total_len.toString()} unit' ),
               actions: [
                 IconButton(onPressed: () async{
                   total_notif = await Navigator.push(context, MaterialPageRoute(

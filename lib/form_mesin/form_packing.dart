@@ -452,7 +452,7 @@ class _GeneratePdfState extends State<GeneratePdf> {
         backgroundColor: const Color(0xff4B5526),
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
@@ -463,27 +463,27 @@ class _GeneratePdfState extends State<GeneratePdf> {
                 child: Column(
                   children: [
                     const Text("Hasil Pencarian Untuk Packing",style: TextStyle(fontSize: 20)),
-                    SizedBox(height: 20),
-                    Text("Dimensi Panjang: ${widget.dimensipanjang}",style: TextStyle(fontSize: 20)),
+                    const SizedBox(height: 20),
+                    Text("Dimensi Panjang: ${widget.dimensipanjang}",style: const TextStyle(fontSize: 20)),
                     Text("Dimensi Lebar : ${widget.dimensilebar}",style: const TextStyle(fontSize: 20)),
                     Text("Dimensi Tinggi : ${widget.dimensitinggi}",style: const TextStyle(fontSize: 20)),
                     Text("Berat : ${widget.berat}",style: const TextStyle(fontSize: 20)),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     const Text("Hasil Pencarian ada di Entitas Indhan :",style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold)),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.black),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: EdgeInsets.all(16.0),
-                      child: Text(widget.hasil,style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(widget.hasil,style: const TextStyle(fontSize: 20,fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
@@ -491,9 +491,9 @@ class _GeneratePdfState extends State<GeneratePdf> {
                   onPressed: () {
                     savetogallery();
                   },
-                  child: Text("Simpan Gambar"),
+                  child: const Text("Simpan Gambar"),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 ElevatedButton(
                   onPressed: () {
                     showDialog(
@@ -501,20 +501,20 @@ class _GeneratePdfState extends State<GeneratePdf> {
                       builder: (BuildContext context) {
                         final controller = TextEditingController();
                         return AlertDialog(
-                          title: Text('Simpan PDF'),
+                          title: const Text('Simpan PDF'),
                           content: TextField(
                             controller: controller,
-                            decoration: InputDecoration(labelText: 'Nama File'),
+                            decoration: const InputDecoration(labelText: 'Nama File'),
                           ),
                           actions: <Widget>[
                             TextButton(
-                              child: Text('Batal'),
+                              child: const Text('Batal'),
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
                             ),
                             TextButton(
-                              child: Text('Simpan'),
+                              child: const Text('Simpan'),
                               onPressed: () {
                                 final fileName = controller.text;
                                 if (fileName.isNotEmpty) {
@@ -528,7 +528,7 @@ class _GeneratePdfState extends State<GeneratePdf> {
                       },
                     );
                   },
-                  child: Text("Simpan PDF"),
+                  child: const Text("Simpan PDF"),
                 ),
               ],
             ),
@@ -538,7 +538,7 @@ class _GeneratePdfState extends State<GeneratePdf> {
     );
   }
   savetogallery() {
-    screenshotController.capture(delay: Duration(milliseconds: 10)).then((Uint8List? image){
+    screenshotController.capture(delay: const Duration(milliseconds: 10)).then((Uint8List? image){
       savescreenshot(image!);
     });
     showSnackbar('Gambar berhasil disimpan di Gallery');

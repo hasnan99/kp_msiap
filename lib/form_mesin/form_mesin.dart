@@ -43,51 +43,51 @@ class _form_mesin extends State<form_mesin> {
               onTap: () {
                 if (index == 0) {
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_cutting()));
+                      MaterialPageRoute(builder: (context)=> const form_cutting()));
                 }
                 if(index == 1){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_drilling()));
+                      MaterialPageRoute(builder: (context)=> const form_drilling()));
                 }
                 if(index == 2){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_Welding()));
+                      MaterialPageRoute(builder: (context)=> const form_Welding()));
                 }
                 if(index == 3){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_laser_marking()));
+                      MaterialPageRoute(builder: (context)=> const form_laser_marking()));
                 }
                 if(index == 4){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_smt()));
+                      MaterialPageRoute(builder: (context)=> const form_smt()));
                 }
                 if(index == 5){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_packing()));
+                      MaterialPageRoute(builder: (context)=> const form_packing()));
                 }
                 if(index == 6){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_cutting_cable()));
+                      MaterialPageRoute(builder: (context)=> const form_cutting_cable()));
                 }
                 if(index == 7){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_solar_panel()));
+                      MaterialPageRoute(builder: (context)=> const form_solar_panel()));
                 }
                 if(index == 8){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_drop_test()));
+                      MaterialPageRoute(builder: (context)=> const form_drop_test()));
                 }
                 if(index == 9){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_vibration_test()));
+                      MaterialPageRoute(builder: (context)=> const form_vibration_test()));
                 }
                 if(index == 10){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_ess()));
+                      MaterialPageRoute(builder: (context)=> const form_ess()));
                 }
                 if(index == 11){
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context)=> form_shock_test()));
+                      MaterialPageRoute(builder: (context)=> const form_shock_test()));
                 }
 
               },
